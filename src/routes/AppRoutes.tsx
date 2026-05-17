@@ -5,6 +5,7 @@ import { Login } from "../pages/Login";
 import { Register } from "../pages/Register";
 import { PostDetails } from "../pages/PostDetails";
 import { Posts } from "../pages/Posts";
+import { Dashboard } from "../pages/Dashboard";
 
 import { ScrollToTop } from "./ScrollToTop"; // componente que volta o scroll para o topo ao mudar de página
 
@@ -15,20 +16,12 @@ export function AppRoutes() {
       <ScrollToTop />
 
       <Routes>
-        {/* rota da página inicial */}
         <Route path="/" element={<Home />} />
-
-        {/* rota da listagem completa de artigos */}
         <Route path="/posts" element={<Posts />} />
-
-        {/* rota da página de login */}
-        <Route path="/login" element={<Login />} />
-
-        {/* rota da página de cadastro */}
-        <Route path="/register" element={<Register />} />
-
-        {/* rota dinâmica da página de detalhes do artigo */}
         <Route path="/posts/:id" element={<PostDetails />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>
   );
