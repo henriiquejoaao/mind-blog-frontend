@@ -1,0 +1,279 @@
+.edit-post-page {
+  min-height: 100vh;
+  background: var(--background);
+}
+
+.edit-post-container {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 64px 24px 96px;
+}
+
+.edit-post-back-link {
+  display: inline-flex;
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: 32px;
+  transition: 0.2s ease;
+}
+
+.edit-post-back-link:hover {
+  color: var(--primary);
+}
+
+.edit-post-header {
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.edit-post-header h1 {
+  font-size: 40px;
+  line-height: 1.2;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.edit-post-header p {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+.edit-post-message {
+  color: var(--text-muted);
+  font-size: 18px;
+}
+
+.edit-post-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.edit-post-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edit-post-field label {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.edit-post-field input,
+.edit-post-field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  padding: 0 14px;
+}
+
+.edit-post-field input {
+  height: 44px;
+}
+
+.edit-post-field textarea {
+  min-height: 260px;
+  resize: vertical;
+  padding-top: 14px;
+  line-height: 1.6;
+}
+
+.edit-post-field input::placeholder,
+.edit-post-field textarea::placeholder {
+  color: #64748b;
+}
+
+.edit-post-field input:focus,
+.edit-post-field textarea:focus {
+  border-color: var(--primary);
+}
+
+.edit-banner-input {
+  display: none;
+}
+
+.edit-banner-upload-area {
+  min-height: 220px;
+  border: 1px dashed var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+  overflow: hidden;
+}
+
+.edit-banner-upload-area:hover {
+  border-color: var(--primary);
+}
+
+.edit-banner-upload-area div {
+  text-align: center;
+}
+
+.edit-banner-upload-area strong {
+  display: block;
+  color: var(--text);
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.edit-banner-upload-area span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.edit-banner-upload-area img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+}
+
+.remove-banner-button {
+  width: fit-content;
+  height: 36px;
+  border: 1px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+  padding: 0 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.remove-banner-button:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.edit-post-error {
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.edit-post-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.edit-post-cancel-button,
+.edit-post-submit-button {
+  height: 42px;
+  border: 1px solid var(--border);
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.edit-post-cancel-button {
+  background: transparent;
+  color: var(--text);
+}
+
+.edit-post-cancel-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.edit-post-submit-button {
+  background: var(--primary);
+  color: #031018;
+  border-color: var(--primary);
+  cursor: pointer;
+}
+
+.edit-post-submit-button:hover {
+  background: var(--primary-hover);
+}
+
+.edit-post-submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* modal de sucesso */
+
+.edit-success-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.edit-success-modal {
+  width: min(420px, 100%);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 28px;
+  text-align: center;
+}
+
+.edit-success-modal h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.edit-success-modal p {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.edit-success-modal-button {
+  height: 42px;
+  min-width: 120px;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: #031018;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.edit-success-modal-button:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+@media (max-width: 700px) {
+  .edit-post-container {
+    padding: 48px 20px 72px;
+  }
+
+  .edit-post-header h1 {
+    font-size: 32px;
+  }
+
+  .edit-post-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .edit-post-cancel-button,
+  .edit-post-submit-button {
+    width: 100%;
+  }
+
+  .remove-banner-button {
+    width: 100%;
+  }
+}

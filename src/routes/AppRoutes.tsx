@@ -7,6 +7,7 @@ import { PostDetails } from "../pages/PostDetails";
 import { Posts } from "../pages/Posts";
 import { Dashboard } from "../pages/Dashboard";
 import { NewPost } from "../pages/NewPost";
+import { EditPost } from "../pages/EditPost";
 
 import { ScrollToTop } from "./ScrollToTop"; // componente que volta o scroll para o topo ao mudar de página
 
@@ -24,6 +25,7 @@ export function AppRoutes() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/posts/new" element={<NewPost />} />
+        <Route path="/dashboard/posts/:id/edit" element={<EditPost />} />
       </Routes>
     </BrowserRouter>
   );
