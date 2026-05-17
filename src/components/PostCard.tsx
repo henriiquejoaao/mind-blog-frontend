@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"; // componente usado para navegar para detalhes do artigo
 
-import clockIcon from "../assets/clock.svg"; // ícone de relógio usado para data e tempo de leitura
+import clockIcon from "../assets/clock.svg"; // ícone usado para data e tempo de leitura
 import eyeIcon from "../assets/eye.svg"; // ícone usado para visualizações
 import heartIcon from "../assets/heart.svg"; // ícone usado para curtidas
 
