@@ -1,0 +1,161 @@
+.post-card {
+  background: #111820;
+  border: 1px solid #253241;
+  transition: 0.2s ease;
+  overflow: hidden;
+}
+
+.post-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-4px);
+}
+
+.post-card > a {
+  display: block;
+  height: 100%;
+}
+
+.post-card-image {
+  width: calc(100% - 48px);
+  height: 228px;
+  margin: 24px 24px 0;
+  object-fit: cover;
+  background: var(--surface-light);
+}
+
+.post-card-body {
+  padding: 24px;
+}
+
+.post-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.post-card-category {
+  background: #1b2430;
+  color: #f8fafc;
+  padding: 6px 10px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.post-card-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.post-card-date img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  opacity: 0.8;
+  filter: brightness(0) invert(1);
+  background: transparent;
+}
+
+.post-card h3 {
+  color: #f8fafc;
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 800;
+  margin-bottom: 16px;
+  letter-spacing: -0.4px;
+}
+
+.post-card p {
+  color: #cbd5e1;
+  font-size: 17px;
+  line-height: 1.45;
+  margin-bottom: 26px;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: #94a3b8;
+  font-size: 15px;
+}
+
+.post-card-author {
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.post-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  white-space: nowrap;
+}
+
+.post-card-stats span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.post-card-stats img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  opacity: 0.8;
+  filter: brightness(0) invert(1);
+  background: transparent;
+}
+
+/* versão compacta usada na seção de artigos recentes */
+.post-card-compact {
+  min-height: 220px;
+}
+
+.post-card-compact .post-card-image {
+  display: none;
+}
+
+.post-card-compact .post-card-body {
+  padding: 28px;
+}
+
+.post-card-compact h3 {
+  font-size: 22px;
+}
+
+.post-card-compact:hover h3 {
+  color: var(--primary);
+}
+
+@media (max-width: 900px) {
+  .post-card-image {
+    height: 190px;
+  }
+
+  .post-card h3 {
+    font-size: 21px;
+  }
+
+  .post-card p {
+    font-size: 15px;
+  }
+
+  .post-card-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
