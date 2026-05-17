@@ -5,6 +5,9 @@ import { Header } from "../components/Header"; // componente do topo
 import { Footer } from "../components/Footer"; // componente do rodapé
 import { api } from "../services/api"; // instância do Axios configurada com o backend
 
+import gearIcon from "../assets/gear.svg"; // ícone de configurações
+import commentIcon from "../assets/comment.svg"; // ícone de comentário/atividade
+
 import "./Dashboard.css"; // estilos do dashboard
 
 interface Author {
@@ -24,16 +27,16 @@ interface Post {
 }
 
 interface User {
-  id?: number;
-  name?: string;
-  email?: string;
+  id: number;
+  name: string;
+  email: string;
 }
 
 // componente responsável pela tela de dashboard do usuário
 export function Dashboard() {
   const navigate = useNavigate(); // usado para redirecionar o usuário
 
-  const [posts, setPosts] = useState<Post[]>([]); // armazena os posts vindos da API
+  const [posts, setPosts] = useState<Post[]>([]); // armazena apenas os posts do usuário logado
   const [user, setUser] = useState<User | null>(null); // armazena o usuário logado
   const [loading, setLoading] = useState(true); // controla carregamento da tela
 
@@ -42,19 +45,23 @@ export function Dashboard() {
     const token = localStorage.getItem("token"); // busca o token salvo no login
     const storedUser = localStorage.getItem("user"); // busca o usuário salvo no login
 
-    if (!token) {
-      navigate("/login"); // se não tiver token, manda para login
+    if (!token || !storedUser) {
+      navigate("/login"); // se não tiver token ou usuário, manda para login
       return;
     }
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const parsedUser: User = JSON.parse(storedUser);
+
+    setUser(parsedUser);
 
     try {
-      const response = await api.get("/posts"); // por enquanto busca todos os posts
+      const response = await api.get("/posts"); // busca todos os posts do backend
 
-      setPosts(response.data);
+      const userPosts = response.data.filter(
+        (post: Post) => post.author.id === parsedUser.id
+      ); // filtra somente os artigos do usuário logado
+
+      setPosts(userPosts);
     } finally {
       setLoading(false);
     }
@@ -64,18 +71,10 @@ export function Dashboard() {
     loadDashboard();
   }, []);
 
-  // remove o token e volta para login
-  function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    navigate("/login");
-  }
-
   const totalPosts = posts.length;
-  const totalLikes = totalPosts * 5;
-  const totalComments = totalPosts * 2;
-  const averageReadingTime = 8;
+  const totalLikes = totalPosts * 5; // valor visual simulado
+  const totalComments = totalPosts * 2; // valor visual simulado
+  const averageReadingTime = totalPosts > 0 ? 8 : 0; // valor visual simulado
 
   if (loading) {
     return (
@@ -107,20 +106,13 @@ export function Dashboard() {
 
             <div className="dashboard-actions">
               <Link to="/settings" className="dashboard-secondary-button">
+                <img src={gearIcon} alt="" className="dashboard-button-icon" />
                 Configurações
               </Link>
 
               <Link to="/dashboard/posts/new" className="dashboard-primary-button">
                 + Novo Artigo
               </Link>
-
-              <button
-                type="button"
-                className="dashboard-logout-button"
-                onClick={handleLogout}
-              >
-                Sair
-              </button>
             </div>
           </div>
 
@@ -131,7 +123,7 @@ export function Dashboard() {
             </div>
 
             <div className="stat-card">
-              <span>Engajamento</span>
+              <span>Comentários</span>
               <strong>{totalComments}</strong>
             </div>
 
@@ -169,7 +161,9 @@ export function Dashboard() {
 
                         <div className="dashboard-post-meta">
                           <span>
-                            {new Date(post.createdAt).toLocaleDateString("pt-BR")}
+                            {new Date(post.createdAt).toLocaleDateString(
+                              "pt-BR"
+                            )}
                           </span>
                           <span>2 comentários</span>
                           <span>1 curtida</span>
@@ -177,7 +171,9 @@ export function Dashboard() {
                       </div>
 
                       <div className="dashboard-post-actions">
-                        <Link to={`/dashboard/posts/${post.id}/edit`}>Editar</Link>
+                        <Link to={`/dashboard/posts/${post.id}/edit`}>
+                          Editar
+                        </Link>
 
                         <button type="button">Excluir</button>
                       </div>
@@ -185,7 +181,9 @@ export function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <p className="dashboard-empty">Nenhum artigo cadastrado.</p>
+                <p className="dashboard-empty">
+                  Você ainda não publicou nenhum artigo.
+                </p>
               )}
             </section>
 
@@ -201,7 +199,11 @@ export function Dashboard() {
                       <strong>Marie Smith</strong> comentou em{" "}
                       <span>O Futuro da Inteligência Artificial em 2025</span>
                     </p>
-                    <small>5 min atrás</small>
+
+                    <small>
+                      <img src={commentIcon} alt="" className="activity-icon" />
+                      5 min atrás
+                    </small>
                   </div>
                 </div>
 
@@ -213,7 +215,11 @@ export function Dashboard() {
                       <strong>John Doe</strong> curtiu seu artigo{" "}
                       <span>Desenvolvimento web moderno</span>
                     </p>
-                    <small>12 min atrás</small>
+
+                    <small>
+                      <img src={commentIcon} alt="" className="activity-icon" />
+                      12 min atrás
+                    </small>
                   </div>
                 </div>
 
@@ -224,7 +230,11 @@ export function Dashboard() {
                     <p>
                       <strong>Ana Costa</strong> começou a seguir seu perfil
                     </p>
-                    <small>30 min atrás</small>
+
+                    <small>
+                      <img src={commentIcon} alt="" className="activity-icon" />
+                      30 min atrás
+                    </small>
                   </div>
                 </div>
               </div>

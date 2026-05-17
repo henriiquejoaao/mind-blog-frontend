@@ -42,7 +42,7 @@
   transition: 0.2s ease;
 }
 
-.nav a:not(.nav-button):not(.login-link):hover {
+.nav a:not(.nav-button):not(.login-link):not(.user-dropdown-item):hover {
   color: var(--primary);
 }
 
@@ -102,6 +102,111 @@
   color: #031018 !important;
 }
 
+/* menu do usuário logado */
+
+.user-menu {
+  position: relative;
+}
+
+.user-avatar-button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar-button img {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  display: block;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  width: 260px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  z-index: 20;
+}
+
+.user-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.user-dropdown-header img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  display: block;
+}
+
+.user-dropdown-header strong {
+  display: block;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.user-dropdown-header span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.user-dropdown-item {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: 0.2s ease;
+}
+
+.user-dropdown-item:last-child {
+  border-bottom: 0;
+}
+
+.user-dropdown-item:hover {
+  background: var(--surface);
+  color: var(--primary);
+}
+
+.user-dropdown-logout {
+  font-family: inherit;
+}
+
+.dropdown-icon {
+  width: 18px;
+  color: var(--text-muted);
+  display: inline-flex;
+  justify-content: center;
+}
+
+/* responsivo */
+
 @media (max-width: 900px) {
   .header-content {
     padding: 0 32px;
@@ -134,5 +239,10 @@
   .login-link,
   .nav-button {
     padding: 10px 12px;
+  }
+
+  .user-dropdown {
+    right: -8px;
+    width: 240px;
   }
 }
