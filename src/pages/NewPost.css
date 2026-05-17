@@ -1,0 +1,254 @@
+.new-post-page {
+  min-height: 100vh;
+  background: var(--background);
+}
+
+.new-post-container {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 64px 24px 96px;
+}
+
+.new-post-back-link {
+  display: inline-flex;
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: 32px;
+  transition: 0.2s ease;
+}
+
+.new-post-back-link:hover {
+  color: var(--primary);
+}
+
+.new-post-header {
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.new-post-header h1 {
+  font-size: 40px;
+  line-height: 1.2;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.new-post-header p {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+.new-post-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.new-post-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.new-post-field label {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.new-post-field input,
+.new-post-field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  padding: 0 14px;
+}
+
+.new-post-field input {
+  height: 44px;
+}
+
+.new-post-field textarea {
+  min-height: 260px;
+  resize: vertical;
+  padding-top: 14px;
+  line-height: 1.6;
+}
+
+.new-post-field input::placeholder,
+.new-post-field textarea::placeholder {
+  color: #64748b;
+}
+
+.new-post-field input:focus,
+.new-post-field textarea:focus {
+  border-color: var(--primary);
+}
+
+.banner-input {
+  display: none;
+}
+
+.banner-upload-area {
+  min-height: 220px;
+  border: 1px dashed var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+  overflow: hidden;
+}
+
+.banner-upload-area:hover {
+  border-color: var(--primary);
+}
+
+.banner-upload-area div {
+  text-align: center;
+}
+
+.banner-upload-area strong {
+  display: block;
+  color: var(--text);
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.banner-upload-area span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.banner-upload-area img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+}
+
+.new-post-error {
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.new-post-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.new-post-cancel-button,
+.new-post-submit-button {
+  height: 42px;
+  border: 1px solid var(--border);
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.new-post-cancel-button {
+  background: transparent;
+  color: var(--text);
+}
+
+.new-post-cancel-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.new-post-submit-button {
+  background: var(--primary);
+  color: #031018;
+  border-color: var(--primary);
+  cursor: pointer;
+}
+
+.new-post-submit-button:hover {
+  background: var(--primary-hover);
+}
+
+.new-post-submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* modal de sucesso */
+
+.success-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.success-modal {
+  width: min(420px, 100%);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 28px;
+  text-align: center;
+}
+
+.success-modal h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.success-modal p {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.success-modal-button {
+  height: 42px;
+  min-width: 120px;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: #031018;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.success-modal-button:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+@media (max-width: 700px) {
+  .new-post-container {
+    padding: 48px 20px 72px;
+  }
+
+  .new-post-header h1 {
+    font-size: 32px;
+  }
+
+  .new-post-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .new-post-cancel-button,
+  .new-post-submit-button {
+    width: 100%;
+  }
+}
