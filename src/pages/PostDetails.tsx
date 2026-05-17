@@ -14,43 +14,80 @@ import commentIcon from "../assets/comment.svg"; // ícone de comentário
 
 import "./PostDetails.css"; // estilos da página de detalhes
 
+// tipagem do autor do artigo
 interface Author {
   id: number;
   name: string;
   email: string;
 }
 
+// tipagem do artigo retornado pela API
 interface Post {
   id: number;
   title: string;
   content: string;
-  banner?: string;
+  banner?: string | null;
   createdAt: string;
   updatedAt: string;
   author: Author;
 }
 
+// tipagem do usuário salvo no localStorage
+interface User {
+  id?: number;
+  name?: string;
+  email?: string;
+  avatar?: string;
+  bio?: string;
+}
+
+// componente responsável pela página de detalhes de um artigo
 export function PostDetails() {
-  const { id } = useParams();
+  const { id } = useParams(); // pega o parâmetro "id" da URL
 
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [post, setPost] = useState<Post | null>(null); // armazena o artigo encontrado
+  const [currentUser, setCurrentUser] = useState<User | null>(null); // armazena o usuário logado
+  const [loading, setLoading] = useState(true); // controla o carregamento
+  const [error, setError] = useState(""); // armazena mensagem de erro
 
+  // função responsável por buscar o artigo pelo id
   async function loadPost() {
     try {
-      const response = await api.get(`/posts/${id}`);
+      const storedUser = localStorage.getItem("user");
 
-      setPost(response.data);
+      if (storedUser) {
+        setCurrentUser(JSON.parse(storedUser));
+      }
+
+      const response = await api.get(`/posts/${id}`); // faz GET em http://localhost:3333/posts/:id
+
+      setPost(response.data); // salva o artigo retornado pela API
     } catch {
-      setError("Artigo não encontrado.");
+      setError("Artigo não encontrado."); // define mensagem caso a API retorne erro
     } finally {
-      setLoading(false);
+      setLoading(false); // finaliza o carregamento
     }
   }
 
+  // executa a busca quando a página carrega ou quando o id muda
   useEffect(() => {
     loadPost();
+
+    function handleUserUpdated() {
+      const storedUser = localStorage.getItem("user");
+
+      if (storedUser) {
+        setCurrentUser(JSON.parse(storedUser));
+      } else {
+        setCurrentUser(null);
+      }
+    }
+
+    window.addEventListener("user-updated", handleUserUpdated);
+
+    return () => {
+      window.removeEventListener("user-updated", handleUserUpdated);
+    };
   }, [id]);
 
   if (loading) {
@@ -87,6 +124,14 @@ export function PostDetails() {
 
   const formattedDate = new Date(post.createdAt).toLocaleDateString("pt-BR");
 
+  const isCurrentUserAuthor = currentUser?.email === post.author.email;
+
+  const authorAvatar = isCurrentUserAuthor ? currentUser?.avatar : "";
+
+  const authorInitial = post.author.name.charAt(0).toUpperCase();
+
+  const currentUserInitial = currentUser?.name?.charAt(0).toUpperCase() || "U";
+
   return (
     <>
       <Header />
@@ -112,11 +157,15 @@ export function PostDetails() {
 
           <div className="post-main-info">
             <div className="post-author-info">
-              <img
-                src="https://i.pravatar.cc/80?img=12"
-                alt={post.author.name}
-                className="author-photo"
-              />
+              {authorAvatar ? (
+                <img
+                  src={authorAvatar}
+                  alt={post.author.name}
+                  className="author-photo"
+                />
+              ) : (
+                <span className="author-photo-fallback">{authorInitial}</span>
+              )}
 
               <div>
                 <strong>{post.author.name}</strong>
@@ -149,8 +198,7 @@ export function PostDetails() {
 
           <div className="post-stats-row">
             <span>
-              <img src={heartIcon} alt="" className="detail-icon" />
-              1 curtidas
+              <img src={heartIcon} alt="" className="detail-icon" />1 curtidas
             </span>
 
             <span>
@@ -159,8 +207,8 @@ export function PostDetails() {
             </span>
 
             <span>
-              <img src={commentIcon} alt="" className="detail-icon" />
-              2 comentários
+              <img src={commentIcon} alt="" className="detail-icon" />2
+              comentários
             </span>
           </div>
 
@@ -220,14 +268,20 @@ export function PostDetails() {
             <div className="comment-card">
               <div className="comment-top">
                 <div className="comment-user">
-                  <img
-                    src="https://i.pravatar.cc/60?img=12"
-                    alt="John Doe"
-                    className="comment-photo"
-                  />
+                  {currentUser?.avatar ? (
+                    <img
+                      src={currentUser.avatar}
+                      alt={currentUser.name || "Usuário"}
+                      className="comment-photo"
+                    />
+                  ) : (
+                    <span className="comment-photo-fallback">
+                      {currentUserInitial}
+                    </span>
+                  )}
 
                   <div className="comment-user-info">
-                    <strong>John Doe</strong>
+                    <strong>{currentUser?.name || "John Doe"}</strong>
                     <span>20/01/2026</span>
                   </div>
                 </div>
@@ -246,11 +300,7 @@ export function PostDetails() {
             <div className="comment-card">
               <div className="comment-top">
                 <div className="comment-user">
-                  <img
-                    src="https://i.pravatar.cc/60?img=32"
-                    alt="Marie Smith"
-                    className="comment-photo"
-                  />
+                  <span className="comment-photo-fallback">M</span>
 
                   <div className="comment-user-info">
                     <strong>Marie Smith</strong>

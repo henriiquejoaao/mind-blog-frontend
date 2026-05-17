@@ -330,3 +330,27 @@
     height: 280px;
   }
 }
+
+.author-photo-fallback,
+.comment-photo-fallback {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.author-photo-fallback {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
+
+.comment-photo-fallback {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
