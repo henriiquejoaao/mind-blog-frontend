@@ -10,8 +10,6 @@ import "./Home.css"; // estilos específicos da página Home
 
 import mailIcon from "../assets/mail.svg";
 
-console.log(mailIcon);
-
 // tipagem do autor do artigo
 interface Author {
   id: number;
@@ -24,25 +22,38 @@ interface Post {
   id: number;
   title: string;
   content: string;
-  banner?: string; // campo opcional, porque alguns posts podem não ter imagem
+  banner?: string | null;
   createdAt: string;
   updatedAt: string;
-  author: Author; // autor relacionado ao artigo
+  author: Author;
 }
 
 // componente da página inicial
 export function Home() {
   const [posts, setPosts] = useState<Post[]>([]); // estado que armazena a lista de posts
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // controla se o usuário está logado
 
-  async function loadPosts() { // função responsável por buscar os posts no backend
-    const response = await api.get("/posts"); // faz GET em http://localhost:3333/posts
+  async function loadPosts() {
+    const response = await api.get("/posts");
 
-    setPosts(response.data); // salva os posts recebidos no estado
+    setPosts(response.data);
   }
 
-  // executa a função loadPosts quando a página é carregada
+  function checkAuthentication() {
+    const token = localStorage.getItem("token");
+
+    setIsAuthenticated(!!token);
+  }
+
   useEffect(() => {
     loadPosts();
+    checkAuthentication();
+
+    window.addEventListener("user-updated", checkAuthentication);
+
+    return () => {
+      window.removeEventListener("user-updated", checkAuthentication);
+    };
   }, []);
 
   const featuredPosts = posts.slice(0, 6); // exibe até 6 artigos na seção de destaque
@@ -69,9 +80,15 @@ export function Home() {
                 Explorar Artigos
               </Link>
 
-              <Link to="/login" className="btn btn-outline">
-                Começar a Escrever
-              </Link>
+              {isAuthenticated ? (
+                <Link to="/dashboard/posts/new" className="btn btn-outline">
+                  Começar a Escrever
+                </Link>
+              ) : (
+                <Link to="/login" className="btn btn-outline">
+                  Começar a Escrever
+                </Link>
+              )}
             </div>
           </div>
         </section>
@@ -116,7 +133,7 @@ export function Home() {
           <div className="container">
             <div className="newsletter-content">
               <div className="newsletter-icon">
-               <img src={mailIcon} alt="" />
+                <img src={mailIcon} alt="" />
               </div>
 
               <h2>Newsletter Semanal</h2>
@@ -136,22 +153,24 @@ export function Home() {
           </div>
         </section>
 
-        <section className="section cta">
-          <div className="container">
-            <div className="cta-box">
-              <h2>Compartilhe Seu Conhecimento</h2>
+        {!isAuthenticated && (
+          <section className="section cta">
+            <div className="container">
+              <div className="cta-box">
+                <h2>Compartilhe Seu Conhecimento</h2>
 
-              <p>
-                Junte-se à nossa comunidade de escritores e compartilhe suas
-                experiências e conhecimentos em tecnologia.
-              </p>
+                <p>
+                  Junte-se à nossa comunidade de escritores e compartilhe suas
+                  experiências e conhecimentos em tecnologia.
+                </p>
 
-              <Link to="/register" className="btn btn-primary">
-                Criar Conta Gratuita
-              </Link>
+                <Link to="/register" className="btn btn-primary">
+                  Criar Conta Gratuita
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
 
       <Footer />

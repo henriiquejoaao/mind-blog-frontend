@@ -37,13 +37,20 @@ export function Login() {
       });
 
       localStorage.setItem("token", response.data.token); // salva o token JWT
-      localStorage.setItem("user", JSON.stringify(response.data.user)); // salva os dados básicos do usuário
 
-      navigate("/dashboard"); // redireciona para o dashboard
+      if (response.data.user) {
+        localStorage.setItem("user", JSON.stringify(response.data.user)); // salva os dados básicos do usuário
+      }
+
+      window.dispatchEvent(new Event("user-updated")); // atualiza o Header
+
+      navigate("/"); // depois do login, vai para a Home
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const message =
-          error.response?.data?.message || "Email ou senha inválidos.";
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Email ou senha inválidos.";
 
         setError(message);
         return;

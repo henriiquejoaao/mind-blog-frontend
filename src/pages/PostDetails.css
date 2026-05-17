@@ -354,3 +354,60 @@
   height: 48px;
   font-size: 16px;
 }
+
+.comment-form-box {
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.comment-form-box textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  padding: 14px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.comment-form-box textarea::placeholder {
+  color: #64748b;
+}
+
+.comment-form-box textarea:focus {
+  border-color: var(--primary);
+}
+
+.comment-form-box .btn {
+  height: 40px;
+  padding: 0 18px;
+}
+
+.author-photo-fallback,
+.comment-photo-fallback {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.author-photo-fallback {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
+
+.comment-photo-fallback {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
