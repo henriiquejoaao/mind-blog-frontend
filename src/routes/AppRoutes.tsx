@@ -10,6 +10,7 @@ import { NewPost } from "../pages/NewPost";
 import { EditPost } from "../pages/EditPost";
 import { Settings } from "../pages/Settings";
 
+import { PrivateRoute } from "./PrivateRoute"; // componente que protege rotas privadas
 import { ScrollToTop } from "./ScrollToTop"; // componente que volta o scroll para o topo ao mudar de página
 
 // componente responsável por centralizar as rotas da aplicação
@@ -22,12 +23,16 @@ export function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/posts" element={<Posts />} />
         <Route path="/posts/:id" element={<PostDetails />} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/posts/new" element={<NewPost />} />
-        <Route path="/dashboard/posts/:id/edit" element={<EditPost />} />
-        <Route path="/settings" element={<Settings />} />
+
+        <Route element={<PrivateRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/posts/new" element={<NewPost />} />
+          <Route path="/dashboard/posts/:id/edit" element={<EditPost />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
