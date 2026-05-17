@@ -1,3 +1,4 @@
+import axios from "axios"; // usado para identificar erros vindos do Axios/API
 import { useEffect, useState } from "react"; // hooks do React para estado e carregamento
 import { Link, useNavigate } from "react-router-dom"; // Link navega entre páginas e useNavigate redireciona via código
 
@@ -20,7 +21,7 @@ interface Post {
   id: number;
   title: string;
   content: string;
-  banner?: string;
+  banner?: string | null;
   createdAt: string;
   updatedAt: string;
   author: Author;
@@ -39,6 +40,10 @@ export function Dashboard() {
   const [posts, setPosts] = useState<Post[]>([]); // armazena apenas os posts do usuário logado
   const [user, setUser] = useState<User | null>(null); // armazena o usuário logado
   const [loading, setLoading] = useState(true); // controla carregamento da tela
+
+  const [postToDelete, setPostToDelete] = useState<Post | null>(null); // armazena o artigo selecionado para exclusão
+  const [deleteLoading, setDeleteLoading] = useState(false); // controla o carregamento do botão de excluir
+  const [deleteError, setDeleteError] = useState(""); // armazena erro ao excluir artigo
 
   // carrega dados do localStorage e posts da API
   async function loadDashboard() {
@@ -70,6 +75,52 @@ export function Dashboard() {
   useEffect(() => {
     loadDashboard();
   }, []);
+
+  // abre o modal de confirmação de exclusão
+  function handleOpenDeleteModal(post: Post) {
+    setDeleteError("");
+    setPostToDelete(post);
+  }
+
+  // fecha o modal de confirmação de exclusão
+  function handleCloseDeleteModal() {
+    setDeleteError("");
+    setPostToDelete(null);
+  }
+
+  // confirma a exclusão do artigo
+  async function handleConfirmDelete() {
+    if (!postToDelete) {
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      setDeleteError("");
+
+      await api.delete(`/posts/${postToDelete.id}`);
+
+      setPosts((currentPosts) =>
+        currentPosts.filter((post) => post.id !== postToDelete.id)
+      );
+
+      setPostToDelete(null);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Não foi possível excluir o artigo.";
+
+        setDeleteError(message);
+        return;
+      }
+
+      setDeleteError("Não foi possível excluir o artigo. Tente novamente.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
 
   const totalPosts = posts.length;
   const totalLikes = totalPosts * 5; // valor visual simulado
@@ -175,7 +226,12 @@ export function Dashboard() {
                           Editar
                         </Link>
 
-                        <button type="button">Excluir</button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenDeleteModal(post)}
+                        >
+                          Excluir
+                        </button>
                       </div>
                     </article>
                   ))}
@@ -244,6 +300,44 @@ export function Dashboard() {
       </main>
 
       <Footer />
+
+      {postToDelete && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal">
+            <h2>Excluir artigo</h2>
+
+            <p>
+              Tem certeza que deseja excluir o artigo{" "}
+              <strong>{postToDelete.title}</strong>? Essa ação não poderá ser
+              desfeita.
+            </p>
+
+            {deleteError && (
+              <span className="delete-modal-error">{deleteError}</span>
+            )}
+
+            <div className="delete-modal-actions">
+              <button
+                type="button"
+                className="delete-modal-cancel-button"
+                onClick={handleCloseDeleteModal}
+                disabled={deleteLoading}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                className="delete-modal-confirm-button"
+                onClick={handleConfirmDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "Excluindo..." : "Excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
