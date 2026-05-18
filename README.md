@@ -6,8 +6,8 @@ A aplicação permite explorar artigos, visualizar detalhes, criar conta, fazer 
 
 ## 🔗 Repositórios
 
-- Frontend: `https://github.com/henriiquejoaao/mind-blog-frontend`
-- Backend: `https://github.com/henriiquejoaao/mind-blog-backend`
+- Frontend: [Mind Blog Frontend](https://github.com/henriiquejoaao/mind-blog-frontend)
+- Backend: [Mind Blog Backend](https://github.com/henriiquejoaao/mind-blog-backend)
 
 ## 🚀 Tecnologias utilizadas
 
