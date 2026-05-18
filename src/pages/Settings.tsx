@@ -1,14 +1,14 @@
-import { ChangeEvent, FormEvent, useEffect, useState } from "react"; // hooks e tipos de eventos
-import { Link, useNavigate } from "react-router-dom"; // navegação entre páginas e redirecionamento
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-import { Header } from "../components/Header"; // componente do topo
-import { Footer } from "../components/Footer"; // componente do rodapé
+import { Header } from "../components/Header";
+import { Footer } from "../components/Footer";
 
-import personIcon from "../assets/person.svg"; // ícone de usuário
-import mailIcon from "../assets/mail.svg"; // ícone de email
-import trashIcon from "../assets/trash.svg"; // ícone de lixeira
+import personIcon from "../assets/person.svg";
+import mailIcon from "../assets/mail.svg";
+import trashIcon from "../assets/trash.svg";
 
-import "./Settings.css"; // estilos da página de configurações
+import "./Settings.css";
 
 interface User {
   id?: number;
@@ -16,23 +16,23 @@ interface User {
   email?: string;
   avatar?: string;
   bio?: string;
+  createdAt?: string;
 }
 
-// componente responsável pela tela de configurações do perfil
 export function Settings() {
-  const navigate = useNavigate(); // usado para redirecionar o usuário
+  const navigate = useNavigate();
 
-  const [name, setName] = useState(""); // armazena o nome do usuário
-  const [email, setEmail] = useState(""); // armazena o email do usuário
-  const [bio, setBio] = useState(""); // armazena a bio do usuário
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [bio, setBio] = useState("");
+  const [memberSince, setMemberSince] = useState("");
 
-  const [avatarFile, setAvatarFile] = useState<File | null>(null); // armazena o arquivo escolhido
-  const [avatarPreview, setAvatarPreview] = useState(""); // armazena a prévia da imagem
-  const [removeAvatar, setRemoveAvatar] = useState(false); // controla remoção visual da foto
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const [removeAvatar, setRemoveAvatar] = useState(false);
 
-  const [successModalOpen, setSuccessModalOpen] = useState(false); // controla o modal de sucesso
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
 
-  // carrega os dados do usuário salvo no login
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -56,9 +56,14 @@ export function Settings() {
     } else {
       setAvatarPreview("");
     }
+
+    if (user.createdAt) {
+      setMemberSince(new Date(user.createdAt).toLocaleDateString("pt-BR"));
+    } else {
+      setMemberSince("Não informado");
+    }
   }, [navigate]);
 
-  // converte imagem para base64 para poder salvar no localStorage
   function convertFileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -75,7 +80,6 @@ export function Settings() {
     });
   }
 
-  // executada quando o usuário escolhe uma nova imagem
   async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
@@ -90,14 +94,12 @@ export function Settings() {
     setAvatarPreview(base64Image);
   }
 
-  // remove a imagem da prévia
   function handleRemoveAvatar() {
     setAvatarFile(null);
     setAvatarPreview("");
     setRemoveAvatar(true);
   }
 
-  // salva os dados visualmente no localStorage
   function handleSaveSettings(event: FormEvent) {
     event.preventDefault();
 
@@ -123,14 +125,12 @@ export function Settings() {
 
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      // avisa o Header que o usuário foi atualizado
       window.dispatchEvent(new Event("user-updated"));
     }
 
     setSuccessModalOpen(true);
   }
 
-  // fecha o modal de sucesso
   function handleCloseModal() {
     setSuccessModalOpen(false);
   }
@@ -264,12 +264,12 @@ export function Settings() {
               <div className="settings-account-grid">
                 <div>
                   <span>Tipo de conta</span>
-                  <strong>Admin</strong>
+                  <strong>Usuário</strong>
                 </div>
 
                 <div>
                   <span>Membro desde</span>
-                  <strong>20/01/2026</strong>
+                  <strong>{memberSince}</strong>
                 </div>
               </div>
             </section>

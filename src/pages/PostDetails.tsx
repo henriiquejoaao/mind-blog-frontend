@@ -1,18 +1,21 @@
-import { FormEvent, useEffect, useState } from "react"; // hooks do React para estado e carregamento
-import { Link, useParams } from "react-router-dom"; // Link navega entre páginas e useParams pega parâmetros da URL
+import axios from "axios";
+import { FormEvent, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-import { Header } from "../components/Header"; // componente do topo da aplicação
-import { Footer } from "../components/Footer"; // componente do rodapé da aplicação
-import { api } from "../services/api"; // instância do Axios configurada com a URL do backend
+import { Header } from "../components/Header";
+import { Footer } from "../components/Footer";
+import { api } from "../services/api";
 
-import clockIcon from "../assets/clock.svg"; // ícone de relógio
-import eyeIcon from "../assets/eye.svg"; // ícone de visualizações
-import heartIcon from "../assets/heart.svg"; // ícone de curtidas
-import bookmarkIcon from "../assets/bookmark.svg"; // ícone de salvar
-import shareIcon from "../assets/share.svg"; // ícone de compartilhar
-import commentIcon from "../assets/comment.svg"; // ícone de comentário
+import clockIcon from "../assets/clock.svg";
+import eyeIcon from "../assets/eye.svg";
+import heartIcon from "../assets/heart.svg";
+import bookmarkIcon from "../assets/bookmark.svg";
+import shareIcon from "../assets/share.svg";
+import commentIcon from "../assets/comment.svg";
 
-import "./PostDetails.css"; // estilos da página de detalhes
+import "./PostDetails.css";
 
 interface Author {
   id: number;
@@ -20,14 +23,25 @@ interface Author {
   email: string;
 }
 
+interface PostCount {
+  likes: number;
+  comments: number;
+}
+
 interface Post {
   id: number;
   title: string;
+  summary?: string | null;
   content: string;
   banner?: string | null;
+  category?: string | null;
+  tags?: string | null;
+  views: number;
   createdAt: string;
   updatedAt: string;
+  authorId: number;
   author: Author;
+  _count: PostCount;
 }
 
 interface User {
@@ -38,48 +52,105 @@ interface User {
   bio?: string;
 }
 
-interface Comment {
+interface CommentUser {
   id: number;
-  authorName: string;
-  authorAvatar?: string;
-  content: string;
-  date: string;
-  likes: number;
+  name: string;
+  email: string;
 }
 
-// componente responsável pela página de detalhes de um artigo
+interface PostComment {
+  id: number;
+  content: string;
+  createdAt: string;
+  userId: number;
+  postId: number;
+  user: CommentUser;
+}
+
 export function PostDetails() {
-  const { id } = useParams(); // pega o parâmetro "id" da URL
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  const [post, setPost] = useState<Post | null>(null); // armazena o artigo encontrado
-  const [currentUser, setCurrentUser] = useState<User | null>(null); // armazena o usuário logado
-  const [comments, setComments] = useState<Comment[]>([]); // comentários simulados no frontend
-  const [newComment, setNewComment] = useState(""); // texto do novo comentário
-  const [loading, setLoading] = useState(true); // controla o carregamento
-  const [error, setError] = useState(""); // armazena mensagem de erro
+  const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<PostComment[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [newComment, setNewComment] = useState("");
 
-  async function loadPost() {
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [commentsCount, setCommentsCount] = useState(0);
+  const [viewsCount, setViewsCount] = useState(0);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [commentError, setCommentError] = useState("");
+  const [shareMessage, setShareMessage] = useState("");
+
+  function loadCurrentUser() {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      const parsedUser: User = JSON.parse(storedUser);
+      setCurrentUser(parsedUser);
+      return parsedUser;
+    }
+
+    setCurrentUser(null);
+    return null;
+  }
+
+  function getAuthHeaders() {
+    const token = localStorage.getItem("token");
+
+    return {
+      Authorization: `Bearer ${token}`
+    };
+  }
+
+  function getLikedStorageKey(postId: number, user?: User | null) {
+    const userIdentifier = user?.id || user?.email || "anonymous";
+
+    return `liked-post-${userIdentifier}-${postId}`;
+  }
+
+  function calculateReadingTime(content: string) {
+    const words = content.trim().split(/\s+/).filter(Boolean).length;
+    const minutes = Math.ceil(words / 200);
+
+    return Math.max(minutes, 1);
+  }
+
+  async function loadPostDetails() {
     try {
-      const storedUser = localStorage.getItem("user");
+      setLoading(true);
+      setError("");
 
-      if (storedUser) {
-        setCurrentUser(JSON.parse(storedUser));
+      const user = loadCurrentUser();
+
+      const viewKey = `view-registered-post-${id}`;
+
+      if (!sessionStorage.getItem(viewKey)) {
+        await api.post(`/posts/${id}/view`);
+        sessionStorage.setItem(viewKey, "true");
       }
 
-      const response = await api.get(`/posts/${id}`);
+      const postResponse = await api.get(`/posts/${id}`);
+      const postData: Post = postResponse.data;
 
-      setPost(response.data);
+      setPost(postData);
+      setLikesCount(postData._count?.likes ?? 0);
+      setCommentsCount(postData._count?.comments ?? 0);
+      setViewsCount(postData.views ?? 0);
 
-      setComments([
-        {
-          id: 1,
-          authorName: "Marie Smith",
-          content:
-            "Artigo muito interessante, mostra claramente como a IA está deixando de ser tendência para se tornar parte essencial das soluções do dia a dia.",
-          date: "20/01/2026",
-          likes: 4
-        }
-      ]);
+      localStorage.removeItem(`liked-post-${postData.id}`);
+
+      const likedKey = getLikedStorageKey(postData.id, user);
+      const likedFromStorage = localStorage.getItem(likedKey);
+
+      setLiked(likedFromStorage === "true");
+
+      const commentsResponse = await api.get(`/posts/${id}/comments`);
+      setComments(commentsResponse.data);
     } catch {
       setError("Artigo não encontrado.");
     } finally {
@@ -87,16 +158,167 @@ export function PostDetails() {
     }
   }
 
+  async function handleToggleLike() {
+    if (!post) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const storedUser = localStorage.getItem("user");
+    const user: User | null = storedUser ? JSON.parse(storedUser) : null;
+
+    const likedKey = getLikedStorageKey(post.id, user);
+
+    try {
+      if (liked) {
+        await api.delete(`/posts/${post.id}/like`, {
+          headers: getAuthHeaders()
+        });
+
+        setLiked(false);
+        setLikesCount((current) => Math.max(current - 1, 0));
+        localStorage.removeItem(likedKey);
+
+        return;
+      }
+
+      await api.post(
+        `/posts/${post.id}/like`,
+        {},
+        {
+          headers: getAuthHeaders()
+        }
+      );
+
+      setLiked(true);
+      setLikesCount((current) => current + 1);
+      localStorage.setItem(likedKey, "true");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message;
+
+        if (message === "Você já curtiu este artigo.") {
+          setLiked(true);
+          localStorage.setItem(likedKey, "true");
+          return;
+        }
+      }
+    }
+  }
+
+  async function handleSharePost() {
+    const postUrl = window.location.href;
+
+    try {
+      await navigator.clipboard.writeText(postUrl);
+
+      setShareMessage("Link copiado!");
+
+      setTimeout(() => {
+        setShareMessage("");
+      }, 2000);
+    } catch {
+      const textarea = document.createElement("textarea");
+
+      textarea.value = postUrl;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      setShareMessage("Link copiado!");
+
+      setTimeout(() => {
+        setShareMessage("");
+      }, 2000);
+    }
+  }
+
+  async function handleCreateComment(event: FormEvent) {
+    event.preventDefault();
+
+    if (!post) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    if (!newComment.trim()) {
+      setCommentError("Digite um comentário antes de enviar.");
+      return;
+    }
+
+    try {
+      setCommentError("");
+
+      const response = await api.post(
+        `/posts/${post.id}/comments`,
+        {
+          content: newComment
+        },
+        {
+          headers: getAuthHeaders()
+        }
+      );
+
+      setComments((currentComments) => [response.data, ...currentComments]);
+      setCommentsCount((current) => current + 1);
+      setNewComment("");
+    } catch {
+      setCommentError("Não foi possível enviar o comentário.");
+    }
+  }
+
+  async function handleDeleteComment(commentId: number) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      await api.delete(`/posts/comments/${commentId}`, {
+        headers: getAuthHeaders()
+      });
+
+      setComments((currentComments) =>
+        currentComments.filter((comment) => comment.id !== commentId)
+      );
+
+      setCommentsCount((current) => Math.max(current - 1, 0));
+    } catch {
+      setCommentError("Não foi possível excluir o comentário.");
+    }
+  }
+
   useEffect(() => {
-    loadPost();
+    loadPostDetails();
 
     function handleUserUpdated() {
-      const storedUser = localStorage.getItem("user");
+      const updatedUser = loadCurrentUser();
 
-      if (storedUser) {
-        setCurrentUser(JSON.parse(storedUser));
-      } else {
-        setCurrentUser(null);
+      if (post) {
+        const likedKey = getLikedStorageKey(post.id, updatedUser);
+        const likedFromStorage = localStorage.getItem(likedKey);
+
+        setLiked(likedFromStorage === "true");
       }
     }
 
@@ -106,33 +328,6 @@ export function PostDetails() {
       window.removeEventListener("user-updated", handleUserUpdated);
     };
   }, [id]);
-
-  function calculateReadingTime(content: string) {
-    const words = content.trim().split(/\s+/).length;
-    const minutes = Math.ceil(words / 200);
-
-    return Math.max(minutes, 1);
-  }
-
-  function handleAddComment(event: FormEvent) {
-    event.preventDefault();
-
-    if (!newComment.trim()) {
-      return;
-    }
-
-    const comment: Comment = {
-      id: Date.now(),
-      authorName: currentUser?.name || "Usuário",
-      authorAvatar: currentUser?.avatar,
-      content: newComment,
-      date: new Date().toLocaleDateString("pt-BR"),
-      likes: 0
-    };
-
-    setComments((currentComments) => [comment, ...currentComments]);
-    setNewComment("");
-  }
 
   if (loading) {
     return (
@@ -168,12 +363,26 @@ export function PostDetails() {
 
   const formattedDate = new Date(post.createdAt).toLocaleDateString("pt-BR");
   const readingTime = calculateReadingTime(post.content);
-
   const isAuthenticated = !!localStorage.getItem("token");
-  const isCurrentUserAuthor = currentUser?.email === post.author.email;
 
+  const isCurrentUserAuthor = currentUser?.email === post.author.email;
   const authorAvatar = isCurrentUserAuthor ? currentUser?.avatar : "";
   const authorInitial = post.author.name.charAt(0).toUpperCase();
+
+  const postCategory = post.category || "Desenvolvimento web";
+
+  const postSummary =
+    post.summary ||
+    (post.content.length > 120
+      ? `${post.content.slice(0, 120)}...`
+      : post.content);
+
+  const postTags = post.tags
+    ? post.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    : ["Desenvolvimento web", "Tecnologia", "Backend"];
 
   return (
     <>
@@ -188,15 +397,11 @@ export function PostDetails() {
 
           <div className="post-details-divider" />
 
-          <span className="post-category">Desenvolvimento web</span>
+          <span className="post-category">{postCategory}</span>
 
           <h1>{post.title}</h1>
 
-          <p className="post-summary">
-            {post.content.length > 120
-              ? `${post.content.slice(0, 120)}...`
-              : post.content}
-          </p>
+          <p className="post-summary">{postSummary}</p>
 
           <div className="post-main-info">
             <div className="post-author-info">
@@ -224,34 +429,50 @@ export function PostDetails() {
               </div>
             </div>
 
-            <div className="post-action-icons">
-              <button type="button" aria-label="Curtir">
-                <img src={heartIcon} alt="" className="detail-icon" />
-              </button>
+            <div className="post-actions-wrapper">
+              <div className="post-action-icons">
+                <button
+                  type="button"
+                  aria-label="Curtir"
+                  className={liked ? "post-action-liked" : ""}
+                  onClick={handleToggleLike}
+                >
+                  <img src={heartIcon} alt="" className="detail-icon" />
+                </button>
 
-              <button type="button" aria-label="Salvar">
-                <img src={bookmarkIcon} alt="" className="detail-icon" />
-              </button>
+                <button type="button" aria-label="Salvar">
+                  <img src={bookmarkIcon} alt="" className="detail-icon" />
+                </button>
 
-              <button type="button" aria-label="Compartilhar">
-                <img src={shareIcon} alt="" className="detail-icon" />
-              </button>
+                <button
+                  type="button"
+                  aria-label="Compartilhar"
+                  onClick={handleSharePost}
+                >
+                  <img src={shareIcon} alt="" className="detail-icon" />
+                </button>
+              </div>
+
+              {shareMessage && (
+                <span className="post-share-message">{shareMessage}</span>
+              )}
             </div>
           </div>
 
           <div className="post-stats-row">
             <span>
-              <img src={heartIcon} alt="" className="detail-icon" />1 curtidas
+              <img src={heartIcon} alt="" className="detail-icon" />
+              {likesCount} curtidas
             </span>
 
             <span>
               <img src={eyeIcon} alt="" className="detail-icon" />
-              122 visualizações
+              {viewsCount} visualizações
             </span>
 
             <span>
               <img src={commentIcon} alt="" className="detail-icon" />
-              {comments.length} comentários
+              {commentsCount} comentários
             </span>
           </div>
 
@@ -263,50 +484,32 @@ export function PostDetails() {
             />
           )}
 
-          <div className="post-content">
-            <h2>{post.title}</h2>
-
-            <p>{post.content}</p>
-
-            <h3>Introdução</h3>
-
-            <p>
-              Este artigo apresenta uma visão geral sobre o tema abordado,
-              destacando pontos importantes e conceitos relevantes para a
-              comunidade de tecnologia.
-            </p>
-
-            <h3>Principais pontos</h3>
-
-            <p>
-              A proposta é compartilhar conhecimento de forma clara, prática e
-              acessível, conectando teoria e aplicação em projetos reais.
-            </p>
-
-            <h3>Conclusão</h3>
-
-            <p>
-              Compreender esses conceitos ajuda no desenvolvimento de soluções
-              modernas, organizadas e alinhadas com as necessidades do mercado.
-            </p>
+          <div className="post-content markdown-content">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {post.content}
+            </ReactMarkdown>
           </div>
 
           <div className="post-tags">
-            <span>Desenvolvimento web</span>
-            <span>Tecnologia</span>
-            <span>Backend</span>
+            {postTags.map((tag) => (
+              <span key={tag}>{tag}</span>
+            ))}
           </div>
 
           <section className="comments-section">
-            <h2>Comentários ({comments.length})</h2>
+            <h2>Comentários ({commentsCount})</h2>
 
             {isAuthenticated ? (
-              <form className="comment-form-box" onSubmit={handleAddComment}>
+              <form className="comment-form-box" onSubmit={handleCreateComment}>
                 <textarea
                   placeholder="Escreva seu comentário..."
                   value={newComment}
                   onChange={(event) => setNewComment(event.target.value)}
                 />
+
+                {commentError && (
+                  <span className="comment-error">{commentError}</span>
+                )}
 
                 <button type="submit" className="btn btn-primary">
                   Enviar comentário
@@ -323,33 +526,51 @@ export function PostDetails() {
             )}
 
             {comments.map((comment) => {
-              const initial = comment.authorName.charAt(0).toUpperCase();
+              const commentInitial = comment.user.name.charAt(0).toUpperCase();
+
+              const isCommentOwner = currentUser?.id === comment.user.id;
+              const isPostOwner = currentUser?.id === post.author.id;
+              const canDeleteComment = isCommentOwner || isPostOwner;
+
+              const shouldUseCurrentUserAvatar =
+                currentUser?.id === comment.user.id && currentUser?.avatar;
 
               return (
                 <div className="comment-card" key={comment.id}>
                   <div className="comment-top">
                     <div className="comment-user">
-                      {comment.authorAvatar ? (
+                      {shouldUseCurrentUserAvatar ? (
                         <img
-                          src={comment.authorAvatar}
-                          alt={comment.authorName}
+                          src={currentUser.avatar}
+                          alt={comment.user.name}
                           className="comment-photo"
                         />
                       ) : (
                         <span className="comment-photo-fallback">
-                          {initial}
+                          {commentInitial}
                         </span>
                       )}
 
                       <div className="comment-user-info">
-                        <strong>{comment.authorName}</strong>
-                        <span>{comment.date}</span>
+                        <strong>{comment.user.name}</strong>
+                        <span>
+                          {new Date(comment.createdAt).toLocaleDateString(
+                            "pt-BR"
+                          )}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="comment-like">
-                      <img src={heartIcon} alt="" className="detail-icon" />
-                      <span>{comment.likes}</span>
+                    <div className="comment-actions">
+                      {canDeleteComment && (
+                        <button
+                          type="button"
+                          className="comment-delete-button"
+                          onClick={() => handleDeleteComment(comment.id)}
+                        >
+                          Excluir
+                        </button>
+                      )}
                     </div>
                   </div>
 

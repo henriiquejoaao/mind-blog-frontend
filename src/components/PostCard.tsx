@@ -1,8 +1,9 @@
-import { Link } from "react-router-dom"; // componente usado para navegar para detalhes do artigo
+import { Link } from "react-router-dom"; // usado para navegar para detalhes do artigo
 
-import clockIcon from "../assets/clock.svg"; // ícone usado para data e tempo de leitura
-import eyeIcon from "../assets/eye.svg"; // ícone usado para visualizações
-import heartIcon from "../assets/heart.svg"; // ícone usado para curtidas
+import clockIcon from "../assets/clock.svg"; // ícone de tempo de leitura
+import eyeIcon from "../assets/eye.svg"; // ícone de visualizações
+import heartIcon from "../assets/heart.svg"; // ícone de curtidas
+import commentIcon from "../assets/comment.svg"; // ícone de comentários
 
 import "./PostCard.css"; // estilos do card
 
@@ -12,72 +13,98 @@ interface Author {
   email: string;
 }
 
+interface PostCount {
+  likes?: number;
+  comments?: number;
+}
+
+interface Post {
+  id: number;
+  title: string;
+  content: string;
+  banner?: string | null;
+  views?: number;
+  createdAt: string;
+  updatedAt: string;
+  author: Author;
+  _count?: PostCount;
+}
+
 interface PostCardProps {
-  post: {
-    id: number;
-    title: string;
-    content: string;
-    banner?: string;
-    createdAt: string;
-    author: Author;
-  };
+  post: Post;
   variant?: "default" | "compact";
 }
 
-// componente responsável por exibir um artigo em formato de card
+// componente responsável por exibir um card de artigo
 export function PostCard({ post, variant = "default" }: PostCardProps) {
-  const formattedDate = new Date(post.createdAt).toLocaleDateString("pt-BR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric"
-  });
+  const bannerUrl = post.banner
+    ? `http://localhost:3333${post.banner}`
+    : "";
+
+  const likesCount = post._count?.likes ?? 0;
+  const commentsCount = post._count?.comments ?? 0;
+  const viewsCount = post.views ?? 0;
+
+  function calculateReadingTime(content: string) {
+    const words = content.trim().split(/\s+/).filter(Boolean).length;
+    const minutes = Math.ceil(words / 200);
+
+    return Math.max(minutes, 1);
+  }
+
+  const readingTime = calculateReadingTime(post.content);
 
   return (
-    <article className={`post-card post-card-${variant}`}>
-      <Link to={`/posts/${post.id}`}>
-        {post.banner && variant === "default" && (
-          <img
-            className="post-card-image"
-            src={`http://localhost:3333${post.banner}`}
-            alt={post.title}
-          />
+    <article className={`post-card ${variant === "compact" ? "compact" : ""}`}>
+      <Link to={`/posts/${post.id}`} className="post-card-image-link">
+        {bannerUrl ? (
+          <img src={bannerUrl} alt={post.title} className="post-card-image" />
+        ) : (
+          <div className="post-card-image-placeholder">
+            <span>Sem imagem</span>
+          </div>
         )}
+      </Link>
 
-        <div className="post-card-body">
-          <div className="post-card-meta">
-            <span className="post-card-category">Desenvolvimento web</span>
+      <div className="post-card-content">
+        <span className="post-card-category">Desenvolvimento web</span>
 
-            <span className="post-card-date">
+        <h3>
+          <Link to={`/posts/${post.id}`}>{post.title}</Link>
+        </h3>
+
+        <p>
+          {post.content.length > 120
+            ? `${post.content.slice(0, 120)}...`
+            : post.content}
+        </p>
+
+        <div className="post-card-footer">
+          <span>{post.author.name}</span>
+
+          <div className="post-card-stats">
+            <span>
               <img src={clockIcon} alt="" />
-              {formattedDate}
+              {readingTime}min
+            </span>
+
+            <span>
+              <img src={eyeIcon} alt="" />
+              {viewsCount}
+            </span>
+
+            <span>
+              <img src={heartIcon} alt="" />
+              {likesCount}
+            </span>
+
+            <span>
+              <img src={commentIcon} alt="" />
+              {commentsCount}
             </span>
           </div>
-
-          <h3>{post.title}</h3>
-
-          <p>{post.content}</p>
-
-          <div className="post-card-footer">
-            <span className="post-card-author">{post.author.name}</span>
-
-            <div className="post-card-stats">
-              <span>
-                <img src={clockIcon} alt="" />
-                6min
-              </span>
-
-              <span>
-                <img src={eyeIcon} alt="" />
-                122
-              </span>
-
-              <span>
-                <img src={heartIcon} alt="" />1
-              </span>
-            </div>
-          </div>
         </div>
-      </Link>
+      </div>
     </article>
   );
 }

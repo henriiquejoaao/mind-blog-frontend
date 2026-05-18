@@ -1,44 +1,56 @@
 import { useEffect, useState } from "react"; // hooks do React para estado e efeitos
-import { api } from "../services/api"; // instância do Axios configurada com a URL do backend
 import { Link } from "react-router-dom"; // componente usado para navegação entre páginas
 
-import { Footer } from "../components/Footer";
-import { PostCard } from "../components/PostCard";
-import { Header } from "../components/Header";
+import { api } from "../services/api"; // instância do Axios configurada com a URL do backend
+
+import { Footer } from "../components/Footer"; // rodapé
+import { PostCard } from "../components/PostCard"; // card de artigo
+import { Header } from "../components/Header"; // topo
+
+import mailIcon from "../assets/mail.svg"; // ícone da newsletter
 
 import "./Home.css"; // estilos específicos da página Home
 
-import mailIcon from "../assets/mail.svg";
-
-// tipagem do autor do artigo
 interface Author {
   id: number;
   name: string;
   email: string;
 }
 
-// tipagem do artigo retornado pela API
+interface PostCount {
+  likes: number;
+  comments: number;
+}
+
 interface Post {
   id: number;
   title: string;
+  summary?: string | null;
   content: string;
   banner?: string | null;
+  category?: string | null;
+  tags?: string | null;
+  views: number;
   createdAt: string;
   updatedAt: string;
+  authorId: number;
   author: Author;
+  _count: PostCount;
 }
 
 // componente da página inicial
 export function Home() {
-  const [posts, setPosts] = useState<Post[]>([]); // estado que armazena a lista de posts
+  const [posts, setPosts] = useState<Post[]>([]); // armazena a lista de posts
   const [isAuthenticated, setIsAuthenticated] = useState(false); // controla se o usuário está logado
 
+  // busca os posts do backend
   async function loadPosts() {
     const response = await api.get("/posts");
 
     setPosts(response.data);
   }
 
+  // verifica se existe token salvo
   function checkAuthentication() {
     const token = localStorage.getItem("token");
 
@@ -56,8 +68,32 @@ export function Home() {
     };
   }, []);
 
-  const featuredPosts = posts.slice(0, 6); // exibe até 6 artigos na seção de destaque
-  const recentPosts = posts.slice(0, 9); // exibe até 9 artigos na seção de recentes
+  // artigos em destaque: ordenados por mais curtidas
+  const featuredPosts = [...posts]
+    .sort((postA, postB) => {
+      const likesA = postA._count?.likes ?? 0;
+      const likesB = postB._count?.likes ?? 0;
+
+      if (likesB !== likesA) {
+        return likesB - likesA;
+      }
+
+      // se empatar em curtidas, mostra o mais recente primeiro
+      return (
+        new Date(postB.createdAt).getTime() -
+        new Date(postA.createdAt).getTime()
+      );
+    })
+    .slice(0, 6);
+
+  // artigos recentes: ordenados por data de criação
+  const recentPosts = [...posts]
+    .sort(
+      (postA, postB) =>
+        new Date(postB.createdAt).getTime() -
+        new Date(postA.createdAt).getTime()
+    )
+    .slice(0, 9);
 
   return (
     <>
@@ -98,7 +134,7 @@ export function Home() {
             <div className="section-header section-header-row">
               <div>
                 <h2>Artigos em Destaque</h2>
-                <p>Os melhores conteúdos selecionados para você</p>
+                <p>Os conteúdos mais curtidos pela comunidade</p>
               </div>
 
               <Link to="/posts" className="see-all-link">
@@ -145,6 +181,7 @@ export function Home() {
 
               <form className="newsletter-form">
                 <input type="email" placeholder="exemplo@email.com" />
+
                 <button type="button" className="btn btn-primary">
                   Inscrever
                 </button>

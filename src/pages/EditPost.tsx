@@ -1,12 +1,20 @@
 import axios from "axios"; // usado para identificar erros vindos do Axios/API
-import { ChangeEvent, FormEvent, useEffect, useState } from "react"; // hooks e tipos de eventos do React
+import {
+  ChangeEvent,
+  FormEvent,
+  KeyboardEvent,
+  useEffect,
+  useState
+} from "react"; // hooks e tipos de eventos do React
 import { Link, useNavigate, useParams } from "react-router-dom"; // navegação e parâmetros da URL
 
 import { Header } from "../components/Header"; // componente do topo
 import { Footer } from "../components/Footer"; // componente do rodapé
 import { api } from "../services/api"; // instância do Axios configurada com o backend
 
-import "./EditPost.css"; // estilos da página de edição de artigo
+import trashIcon from "../assets/trash.svg"; // ícone de remover imagem
+
+import "./EditPost.css"; // estilos da página de edição
 
 interface Author {
   id: number;
@@ -17,30 +25,41 @@ interface Author {
 interface Post {
   id: number;
   title: string;
+  summary?: string | null;
   content: string;
   banner?: string | null;
+  category?: string | null;
+  tags?: string | null;
   createdAt: string;
   updatedAt: string;
+  authorId: number;
   author: Author;
 }
 
-// componente responsável pela edição de um artigo existente
+// componente responsável pela edição de um artigo
 export function EditPost() {
   const { id } = useParams(); // pega o id do artigo pela URL
   const navigate = useNavigate(); // usado para redirecionar o usuário
 
-  const [title, setTitle] = useState(""); // armazena o título do artigo
-  const [content, setContent] = useState(""); // armazena o conteúdo do artigo
-  const [banner, setBanner] = useState<File | null>(null); // armazena a nova imagem selecionada
-  const [bannerPreview, setBannerPreview] = useState(""); // armazena o preview da imagem atual ou nova
-  const [removeBanner, setRemoveBanner] = useState(false); // controla se a imagem deve ser removida
+  const [title, setTitle] = useState(""); // título do artigo
+  const [summary, setSummary] = useState(""); // resumo do artigo
+  const [category, setCategory] = useState("Desenvolvimento web"); // categoria do artigo
+  const [content, setContent] = useState(""); // conteúdo em markdown
 
-  const [error, setError] = useState(""); // armazena mensagens de erro
-  const [loading, setLoading] = useState(true); // controla carregamento inicial
-  const [saving, setSaving] = useState(false); // controla envio do formulário
-  const [successModalOpen, setSuccessModalOpen] = useState(false); // controla modal de sucesso
+  const [tagInput, setTagInput] = useState(""); // input para adicionar tag
+  const [tags, setTags] = useState<string[]>([]); // lista de tags
 
-  // busca o artigo atual para preencher o formulário
+  const [banner, setBanner] = useState<File | null>(null); // nova imagem selecionada
+  const [bannerPreview, setBannerPreview] = useState(""); // prévia da imagem
+  const [bannerFileName, setBannerFileName] = useState(""); // nome da nova imagem
+  const [removeBanner, setRemoveBanner] = useState(false); // controla remoção da imagem
+
+  const [loading, setLoading] = useState(true); // carregamento inicial
+  const [saving, setSaving] = useState(false); // carregamento do botão salvar
+  const [error, setError] = useState(""); // mensagem de erro
+  const [successModalOpen, setSuccessModalOpen] = useState(false); // modal de sucesso
+
+  // carrega o artigo atual
   async function loadPost() {
     const token = localStorage.getItem("token");
 
@@ -54,13 +73,24 @@ export function EditPost() {
       const post: Post = response.data;
 
       setTitle(post.title);
+      setSummary(post.summary || "");
+      setCategory(post.category || "Desenvolvimento web");
       setContent(post.content);
+
+      if (post.tags) {
+        const formattedTags = post.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+
+        setTags(formattedTags);
+      }
 
       if (post.banner) {
         setBannerPreview(`http://localhost:3333${post.banner}`);
       }
     } catch {
-      setError("Artigo não encontrado.");
+      setError("Não foi possível carregar o artigo.");
     } finally {
       setLoading(false);
     }
@@ -70,7 +100,7 @@ export function EditPost() {
     loadPost();
   }, [id]);
 
-  // executada quando o usuário escolhe uma nova imagem
+  // função executada quando o usuário seleciona uma nova imagem
   function handleBannerChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
@@ -79,25 +109,74 @@ export function EditPost() {
     }
 
     setBanner(file);
-    setRemoveBanner(false); // se escolheu nova imagem, não vamos remover o banner
     setBannerPreview(URL.createObjectURL(file));
+    setBannerFileName(file.name);
+    setRemoveBanner(false);
   }
 
-  // remove a imagem da prévia e marca que o banner deve ser removido no backend
+  // remove a imagem atual ou a nova imagem selecionada
   function handleRemoveBanner() {
     setBanner(null);
     setBannerPreview("");
+    setBannerFileName("");
     setRemoveBanner(true);
   }
 
-  // envia os dados atualizados para o backend
+  // adiciona tag na lista
+  function handleAddTag() {
+    const formattedTag = tagInput.trim();
+
+    if (!formattedTag) {
+      return;
+    }
+
+    if (tags.includes(formattedTag)) {
+      setTagInput("");
+      return;
+    }
+
+    setTags((currentTags) => [...currentTags, formattedTag]);
+    setTagInput("");
+  }
+
+  // remove tag da lista
+  function handleRemoveTag(tagToRemove: string) {
+    setTags((currentTags) =>
+      currentTags.filter((tag) => tag !== tagToRemove)
+    );
+  }
+
+  // permite adicionar tag com Enter
+  function handleTagKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleAddTag();
+    }
+  }
+
+  // salva alterações do artigo
   async function handleUpdatePost(event: FormEvent) {
     event.preventDefault();
 
     setError("");
 
-    if (!title || !content) {
-      setError("Título e conteúdo são obrigatórios.");
+    if (!title.trim()) {
+      setError("O título é obrigatório.");
+      return;
+    }
+
+    if (!summary.trim()) {
+      setError("O resumo é obrigatório.");
+      return;
+    }
+
+    if (!category.trim()) {
+      setError("A categoria é obrigatória.");
+      return;
+    }
+
+    if (!content.trim()) {
+      setError("O conteúdo é obrigatório.");
       return;
     }
 
@@ -107,14 +186,14 @@ export function EditPost() {
       const formData = new FormData();
 
       formData.append("title", title);
+      formData.append("summary", summary);
+      formData.append("category", category);
       formData.append("content", content);
+      formData.append("tags", tags.join(","));
+      formData.append("removeBanner", String(removeBanner));
 
       if (banner) {
         formData.append("banner", banner);
-      }
-
-      if (removeBanner) {
-        formData.append("removeBanner", "true");
       }
 
       await api.put(`/posts/${id}`, formData, {
@@ -141,7 +220,7 @@ export function EditPost() {
     }
   }
 
-  // fecha o modal e volta para o dashboard
+  // fecha modal e volta para o dashboard
   function handleSuccessConfirm() {
     setSuccessModalOpen(false);
     navigate("/dashboard");
@@ -178,83 +257,182 @@ export function EditPost() {
             <p>Atualize as informações do seu artigo</p>
           </div>
 
-          {error && !title ? (
-            <p className="edit-post-error">{error}</p>
-          ) : (
-            <form className="edit-post-form" onSubmit={handleUpdatePost}>
-              <div className="edit-post-field">
-                <label htmlFor="title">Título do artigo</label>
+          <form className="edit-post-form" onSubmit={handleUpdatePost}>
+            <div className="edit-post-field">
+              <label htmlFor="title">Título do Artigo *</label>
 
-                <input
-                  id="title"
-                  type="text"
-                  placeholder="Digite o título do seu artigo"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                />
-              </div>
+              <input
+                id="title"
+                type="text"
+                placeholder="O Futuro da Inteligência Artificial em 2025"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+              />
+            </div>
 
-              <div className="edit-post-field">
-                <label htmlFor="banner">Imagem de capa</label>
+            <div className="edit-post-field">
+              <label htmlFor="summary">Resumo *</label>
 
-                <label htmlFor="banner" className="edit-banner-upload-area">
-                  {bannerPreview ? (
-                    <img src={bannerPreview} alt="Prévia da imagem do artigo" />
-                  ) : (
-                    <div>
-                      <strong>Clique para selecionar uma imagem</strong>
-                      <span>PNG, JPG ou JPEG</span>
-                    </div>
-                  )}
+              <textarea
+                id="summary"
+                className="edit-post-summary"
+                placeholder="Escreva um breve resumo do artigo..."
+                value={summary}
+                maxLength={120}
+                onChange={(event) => setSummary(event.target.value)}
+              />
+
+              <span className="edit-post-counter">
+                {summary.length}/120 caracteres
+              </span>
+            </div>
+
+            <div className="edit-post-field">
+              <label htmlFor="category">Categoria *</label>
+
+              <select
+                id="category"
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+              >
+                <option value="Desenvolvimento web">Desenvolvimento web</option>
+                <option value="Backend">Backend</option>
+                <option value="Frontend">Frontend</option>
+                <option value="Inteligência Artificial">
+                  Inteligência Artificial
+                </option>
+                <option value="DevOps">DevOps</option>
+                <option value="Banco de Dados">Banco de Dados</option>
+              </select>
+            </div>
+
+            <div className="edit-post-field">
+              <label htmlFor="banner">Imagem de Capa</label>
+
+              <label htmlFor="banner" className="edit-banner-upload-area">
+                {bannerPreview ? (
+                  <img src={bannerPreview} alt="Prévia da imagem selecionada" />
+                ) : (
+                  <div>
+                    <strong>Clique para selecionar uma imagem</strong>
+                    <span>PNG, JPG ou JPEG</span>
+                  </div>
+                )}
+              </label>
+
+              <input
+                id="banner"
+                type="file"
+                accept="image/png, image/jpeg, image/jpg"
+                onChange={handleBannerChange}
+                className="edit-banner-input"
+              />
+
+              <div
+                className={
+                  bannerPreview
+                    ? "edit-banner-control-row has-remove"
+                    : "edit-banner-control-row no-remove"
+                }
+              >
+                <label htmlFor="banner" className="edit-banner-name">
+                  {bannerFileName ||
+                    (bannerPreview
+                      ? "Imagem atual do artigo"
+                      : "Nenhuma imagem selecionada")}
                 </label>
-
-                <input
-                  id="banner"
-                  type="file"
-                  accept="image/png, image/jpeg, image/jpg"
-                  onChange={handleBannerChange}
-                  className="edit-banner-input"
-                />
 
                 {bannerPreview && (
                   <button
                     type="button"
-                    className="remove-banner-button"
+                    className="edit-remove-banner-button"
                     onClick={handleRemoveBanner}
+                    aria-label="Remover imagem de capa"
                   >
-                    Remover imagem
+                    <img src={trashIcon} alt="" />
                   </button>
                 )}
               </div>
+            </div>
 
-              <div className="edit-post-field">
-                <label htmlFor="content">Conteúdo</label>
+            <div className="edit-post-field">
+              <label htmlFor="tag">Tags</label>
 
-                <textarea
-                  id="content"
-                  placeholder="Escreva o conteúdo do artigo..."
-                  value={content}
-                  onChange={(event) => setContent(event.target.value)}
+              <div className="edit-post-tags-row">
+                <input
+                  id="tag"
+                  type="text"
+                  placeholder="Digite uma tag"
+                  value={tagInput}
+                  onChange={(event) => setTagInput(event.target.value)}
+                  onKeyDown={handleTagKeyDown}
                 />
-              </div>
-
-              {error && <span className="edit-post-error">{error}</span>}
-
-              <div className="edit-post-actions">
-                <Link to="/dashboard" className="edit-post-cancel-button">
-                  Cancelar
-                </Link>
 
                 <button
-                  type="submit"
-                  className="edit-post-submit-button"
-                  disabled={saving}
+                  type="button"
+                  className="edit-post-add-tag-button"
+                  onClick={handleAddTag}
                 >
-                  {saving ? "Salvando..." : "Salvar Alterações"}
+                  Adicionar
                 </button>
               </div>
-            </form>
-          )}
+
+              {tags.length > 0 && (
+                <div className="edit-post-tags-list">
+                  {tags.map((tag) => (
+                    <button
+                      type="button"
+                      key={tag}
+                      className="edit-post-tag"
+                      onClick={() => handleRemoveTag(tag)}
+                    >
+                      {tag}
+                      <span>×</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="edit-post-field">
+              <label htmlFor="content">Conteúdo do Artigo *</label>
+
+              <textarea
+                id="content"
+                className="edit-post-content-textarea"
+                placeholder={`## Introdução
+
+Escreva seu artigo usando Markdown.
+
+## Principais pontos
+
+- Primeiro ponto
+- Segundo ponto
+
+## Conclusão
+
+Finalize seu artigo aqui.`}
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+              />
+            </div>
+
+            {error && <span className="edit-post-error">{error}</span>}
+
+            <div className="edit-post-actions">
+              <Link to="/dashboard" className="edit-post-cancel-button">
+                Cancelar
+              </Link>
+
+              <button
+                type="submit"
+                className="edit-post-submit-button"
+                disabled={saving}
+              >
+                {saving ? "Salvando..." : "Salvar Alterações"}
+              </button>
+            </div>
+          </form>
         </section>
       </main>
 
@@ -263,12 +441,9 @@ export function EditPost() {
       {successModalOpen && (
         <div className="edit-success-modal-overlay">
           <div className="edit-success-modal">
-            <h2>Artigo atualizado com sucesso!</h2>
+            <h2>Artigo atualizado!</h2>
 
-            <p>
-              Suas alterações foram salvas e já estão disponíveis na listagem de
-              artigos.
-            </p>
+            <p>As alterações foram salvas com sucesso.</p>
 
             <button
               type="button"

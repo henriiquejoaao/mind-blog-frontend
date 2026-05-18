@@ -6,13 +6,16 @@
 .edit-post-container {
   width: min(760px, 100%);
   margin: 0 auto;
-  padding: 64px 24px 96px;
+  padding: 72px 24px 96px;
 }
 
 .edit-post-back-link {
   display: inline-flex;
+  align-items: center;
+  gap: 10px;
   color: var(--text);
   font-size: 14px;
+  font-weight: 500;
   margin-bottom: 32px;
   transition: 0.2s ease;
 }
@@ -24,14 +27,16 @@
 .edit-post-header {
   padding-bottom: 28px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 32px;
+  margin-bottom: 36px;
 }
 
 .edit-post-header h1 {
-  font-size: 40px;
-  line-height: 1.2;
-  margin-bottom: 10px;
+  color: var(--text);
+  font-size: 42px;
+  line-height: 1.15;
+  margin-bottom: 8px;
   font-weight: 500;
+  letter-spacing: -0.8px;
 }
 
 .edit-post-header p {
@@ -39,12 +44,10 @@
   font-size: 16px;
 }
 
-.edit-post-message {
-  color: var(--text-muted);
-  font-size: 18px;
-}
-
 .edit-post-form {
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 38px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -63,21 +66,25 @@
 }
 
 .edit-post-field input,
-.edit-post-field textarea {
+.edit-post-field textarea,
+.edit-post-field select {
   width: 100%;
   border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
+  background-color: var(--surface) !important;
+  color: var(--text) !important;
   outline: none;
   padding: 0 14px;
+  font-size: 15px;
+  font-family: inherit;
+  transition: 0.2s ease;
 }
 
-.edit-post-field input {
+.edit-post-field input,
+.edit-post-field select {
   height: 44px;
 }
 
 .edit-post-field textarea {
-  min-height: 260px;
   resize: vertical;
   padding-top: 14px;
   line-height: 1.6;
@@ -89,9 +96,43 @@
 }
 
 .edit-post-field input:focus,
-.edit-post-field textarea:focus {
+.edit-post-field textarea:focus,
+.edit-post-field select:focus {
   border-color: var(--primary);
 }
+
+.edit-post-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 18px, calc(100% - 12px) 18px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.edit-post-field select option {
+  background: #111827;
+  color: #ffffff;
+}
+
+.edit-post-summary {
+  min-height: 116px;
+}
+
+.edit-post-content-textarea {
+  min-height: 300px;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+}
+
+.edit-post-counter {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* imagem de capa */
 
 .edit-banner-input {
   display: none;
@@ -122,6 +163,7 @@
   display: block;
   color: var(--text);
   font-size: 15px;
+  font-weight: 600;
   margin-bottom: 8px;
 }
 
@@ -134,23 +176,142 @@
   width: 100%;
   height: 260px;
   object-fit: cover;
+  display: block;
 }
 
-.remove-banner-button {
-  width: fit-content;
-  height: 36px;
-  border: 1px solid var(--danger);
-  background: transparent;
-  color: var(--danger);
+.edit-banner-control-row {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-banner-control-row.has-remove {
+  grid-template-columns: 1fr 44px;
+}
+
+.edit-banner-control-row.no-remove {
+  grid-template-columns: 1fr;
+}
+
+.edit-banner-name {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted) !important;
+  display: flex;
+  align-items: center;
   padding: 0 14px;
-  font-size: 13px;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.edit-banner-name:hover {
+  border-color: var(--primary);
+}
+
+.edit-remove-banner-button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: 0.2s ease;
 }
 
-.remove-banner-button:hover {
-  background: rgba(239, 68, 68, 0.12);
+.edit-remove-banner-button img {
+  width: 17px;
+  height: 17px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.7;
+  transition: 0.2s ease;
 }
+
+.edit-remove-banner-button:hover {
+  border-color: var(--danger);
+  background: transparent;
+}
+
+.edit-remove-banner-button:hover img {
+  filter: brightness(0) saturate(100%) invert(42%) sepia(76%) saturate(1667%)
+    hue-rotate(331deg) brightness(99%) contrast(89%);
+  opacity: 1;
+}
+
+/* tags */
+
+.edit-post-tags-row {
+  display: grid;
+  grid-template-columns: 1fr 96px;
+  gap: 10px;
+  align-items: center;
+}
+
+.edit-post-tags-row input {
+  height: 44px;
+}
+
+.edit-post-add-tag-button {
+  height: 44px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: 0.2s ease;
+}
+
+.edit-post-add-tag-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.edit-post-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.edit-post-tag {
+  height: 26px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.edit-post-tag span {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.edit-post-tag:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.edit-post-tag:hover span {
+  color: var(--danger);
+}
+
+/* erros e ações */
 
 .edit-post-error {
   color: var(--danger);
@@ -174,6 +335,7 @@
   align-items: center;
   justify-content: center;
   font-size: 14px;
+  font-family: inherit;
   transition: 0.2s ease;
 }
 
@@ -196,11 +358,17 @@
 
 .edit-post-submit-button:hover {
   background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 .edit-post-submit-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.edit-post-message {
+  color: var(--text-muted);
+  font-size: 18px;
 }
 
 /* modal de sucesso */
@@ -245,6 +413,7 @@
   color: #031018;
   font-size: 14px;
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
   transition: 0.2s ease;
 }
@@ -253,6 +422,8 @@
   background: var(--primary-hover);
   border-color: var(--primary-hover);
 }
+
+/* responsivo */
 
 @media (max-width: 700px) {
   .edit-post-container {
@@ -263,6 +434,26 @@
     font-size: 32px;
   }
 
+  .edit-post-form {
+    padding: 24px;
+  }
+
+  .edit-post-tags-row {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-banner-control-row.has-remove {
+    grid-template-columns: 1fr 42px;
+  }
+
+  .edit-banner-control-row.no-remove {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-remove-banner-button {
+    width: 42px;
+  }
+
   .edit-post-actions {
     flex-direction: column;
     align-items: stretch;
@@ -270,10 +461,6 @@
 
   .edit-post-cancel-button,
   .edit-post-submit-button {
-    width: 100%;
-  }
-
-  .remove-banner-button {
     width: 100%;
   }
 }

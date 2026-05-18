@@ -7,7 +7,10 @@ import { Footer } from "../components/Footer"; // componente do rodapé
 import { api } from "../services/api"; // instância do Axios configurada com o backend
 
 import gearIcon from "../assets/gear.svg"; // ícone de configurações
-import commentIcon from "../assets/comment.svg"; // ícone de comentário/atividade
+import newsIcon from "../assets/news.svg"; // ícone de total de artigos
+import eyeIcon from "../assets/eye.svg"; // ícone de visualizações
+import heartIcon from "../assets/heart.svg"; // ícone de curtidas
+import commentIcon from "../assets/comment.svg"; // ícone de comentários/atividade
 
 import "./Dashboard.css"; // estilos do dashboard
 
@@ -17,41 +20,116 @@ interface Author {
   email: string;
 }
 
+interface PostCount {
+  likes: number;
+  comments: number;
+}
+
 interface Post {
   id: number;
   title: string;
+  summary?: string | null;
   content: string;
   banner?: string | null;
+  category?: string | null;
+  tags?: string | null;
+  views: number;
   createdAt: string;
   updatedAt: string;
+  authorId: number;
   author: Author;
+  _count: PostCount;
 }
 
 interface User {
+  id?: number;
+  name?: string;
+  email?: string;
+  avatar?: string;
+}
+
+interface CommentUser {
   id: number;
   name: string;
   email: string;
 }
 
+interface PostComment {
+  id: number;
+  content: string;
+  createdAt: string;
+  userId: number;
+  postId: number;
+  user: CommentUser;
+}
+
+interface RecentActivity {
+  id: number;
+  postId: number;
+  postTitle: string;
+  commentContent: string;
+  createdAt: string;
+  user: CommentUser;
+}
+
 // componente responsável pela tela de dashboard do usuário
 export function Dashboard() {
-  const navigate = useNavigate(); // usado para redirecionar o usuário
+  const navigate = useNavigate();
 
-  const [posts, setPosts] = useState<Post[]>([]); // armazena apenas os posts do usuário logado
-  const [user, setUser] = useState<User | null>(null); // armazena o usuário logado
-  const [loading, setLoading] = useState(true); // controla carregamento da tela
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(
+    []
+  );
 
-  const [postToDelete, setPostToDelete] = useState<Post | null>(null); // armazena o artigo selecionado para exclusão
-  const [deleteLoading, setDeleteLoading] = useState(false); // controla o carregamento do botão de excluir
-  const [deleteError, setDeleteError] = useState(""); // armazena erro ao excluir artigo
+  const [loading, setLoading] = useState(true);
 
-  // carrega dados do localStorage e posts da API
+  const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  // formata tempo relativo simples
+  function formatRelativeTime(date: string) {
+    const createdAt = new Date(date).getTime();
+    const now = new Date().getTime();
+
+    const differenceInMinutes = Math.floor((now - createdAt) / 1000 / 60);
+
+    if (differenceInMinutes < 1) {
+      return "agora mesmo";
+    }
+
+    if (differenceInMinutes < 60) {
+      return `${differenceInMinutes} min atrás`;
+    }
+
+    const differenceInHours = Math.floor(differenceInMinutes / 60);
+
+    if (differenceInHours < 24) {
+      return `${differenceInHours} h atrás`;
+    }
+
+    const differenceInDays = Math.floor(differenceInHours / 24);
+
+    if (differenceInDays === 1) {
+      return "ontem";
+    }
+
+    return `${differenceInDays} dias atrás`;
+  }
+
+  // carrega dados do localStorage, posts da API e comentários recentes
   async function loadDashboard() {
-    const token = localStorage.getItem("token"); // busca o token salvo no login
-    const storedUser = localStorage.getItem("user"); // busca o usuário salvo no login
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
 
-    if (!token || !storedUser) {
-      navigate("/login"); // se não tiver token ou usuário, manda para login
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    if (!storedUser) {
+      navigate("/login");
       return;
     }
 
@@ -60,13 +138,42 @@ export function Dashboard() {
     setUser(parsedUser);
 
     try {
-      const response = await api.get("/posts"); // busca todos os posts do backend
+      const response = await api.get("/posts");
 
-      const userPosts = response.data.filter(
-        (post: Post) => post.author.id === parsedUser.id
-      ); // filtra somente os artigos do usuário logado
+      const allPosts: Post[] = response.data;
+
+      const userPosts = allPosts.filter(
+        (post) => post.author.id === parsedUser.id
+      );
 
       setPosts(userPosts);
+
+      const commentsRequests = userPosts.map(async (post) => {
+        const commentsResponse = await api.get(`/posts/${post.id}/comments`);
+
+        const comments: PostComment[] = commentsResponse.data;
+
+        return comments.map((comment) => ({
+          id: comment.id,
+          postId: post.id,
+          postTitle: post.title,
+          commentContent: comment.content,
+          createdAt: comment.createdAt,
+          user: comment.user
+        }));
+      });
+
+      const commentsByPost = await Promise.all(commentsRequests);
+
+      const allComments = commentsByPost
+        .flat()
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        .slice(0, 3);
+
+      setRecentActivities(allComments);
     } finally {
       setLoading(false);
     }
@@ -104,6 +211,12 @@ export function Dashboard() {
         currentPosts.filter((post) => post.id !== postToDelete.id)
       );
 
+      setRecentActivities((currentActivities) =>
+        currentActivities.filter(
+          (activity) => activity.postId !== postToDelete.id
+        )
+      );
+
       setPostToDelete(null);
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -123,9 +236,21 @@ export function Dashboard() {
   }
 
   const totalPosts = posts.length;
-  const totalLikes = totalPosts * 5; // valor visual simulado
-  const totalComments = totalPosts * 2; // valor visual simulado
-  const averageReadingTime = totalPosts > 0 ? 8 : 0; // valor visual simulado
+
+  const totalViews = posts.reduce(
+    (total, post) => total + (post.views ?? 0),
+    0
+  );
+
+  const totalLikes = posts.reduce(
+    (total, post) => total + (post._count?.likes ?? 0),
+    0
+  );
+
+  const totalComments = posts.reduce(
+    (total, post) => total + (post._count?.comments ?? 0),
+    0
+  );
 
   if (loading) {
     return (
@@ -169,23 +294,39 @@ export function Dashboard() {
 
           <div className="stats-grid">
             <div className="stat-card">
-              <span>Total de Artigos</span>
+              <div className="stat-card-header">
+                <span>Total de Artigos</span>
+                <img src={newsIcon} alt="" className="stat-card-icon" />
+              </div>
+
               <strong>{totalPosts}</strong>
             </div>
 
             <div className="stat-card">
-              <span>Comentários</span>
-              <strong>{totalComments}</strong>
+              <div className="stat-card-header">
+                <span>Visualizações</span>
+                <img src={eyeIcon} alt="" className="stat-card-icon" />
+              </div>
+
+              <strong>{totalViews}</strong>
             </div>
 
             <div className="stat-card">
-              <span>Curtidas</span>
+              <div className="stat-card-header">
+                <span>Curtidas</span>
+                <img src={heartIcon} alt="" className="stat-card-icon" />
+              </div>
+
               <strong>{totalLikes}</strong>
             </div>
 
             <div className="stat-card">
-              <span>Tempo médio de leitura</span>
-              <strong>{averageReadingTime} min</strong>
+              <div className="stat-card-header">
+                <span>Comentários</span>
+                <img src={commentIcon} alt="" className="stat-card-icon" />
+              </div>
+
+              <strong>{totalComments}</strong>
             </div>
           </div>
 
@@ -195,46 +336,62 @@ export function Dashboard() {
 
               {posts.length > 0 ? (
                 <div className="dashboard-post-list">
-                  {posts.slice(0, 4).map((post) => (
-                    <article key={post.id} className="dashboard-post-item">
-                      {post.banner ? (
-                        <img
-                          src={`http://localhost:3333${post.banner}`}
-                          alt={post.title}
-                        />
-                      ) : (
-                        <div className="dashboard-post-placeholder" />
-                      )}
+                  {posts.slice(0, 4).map((post) => {
+                    const postSummary =
+                      post.summary ||
+                      (post.content.length > 80
+                        ? `${post.content.slice(0, 80)}...`
+                        : post.content);
 
-                      <div className="dashboard-post-info">
-                        <h3>{post.title}</h3>
-                        <p>{post.content}</p>
+                    return (
+                      <article key={post.id} className="dashboard-post-item">
+                        <Link
+                          to={`/posts/${post.id}`}
+                          className="dashboard-post-click-area"
+                          title={`Abrir artigo: ${post.title}`}
+                        >
+                          {post.banner ? (
+                            <img
+                              src={`http://localhost:3333${post.banner}`}
+                              alt={post.title}
+                            />
+                          ) : (
+                            <div className="dashboard-post-placeholder" />
+                          )}
 
-                        <div className="dashboard-post-meta">
-                          <span>
-                            {new Date(post.createdAt).toLocaleDateString(
-                              "pt-BR"
-                            )}
-                          </span>
-                          <span>2 comentários</span>
-                          <span>1 curtida</span>
-                        </div>
-                      </div>
+                          <div className="dashboard-post-info">
+                            <h3>{post.title}</h3>
 
-                      <div className="dashboard-post-actions">
-                        <Link to={`/dashboard/posts/${post.id}/edit`}>
-                          Editar
+                            <p>{postSummary}</p>
+
+                            <div className="dashboard-post-meta">
+                              <span>
+                                {new Date(post.createdAt).toLocaleDateString(
+                                  "pt-BR"
+                                )}
+                              </span>
+
+                              <span>{post._count?.comments ?? 0} comentários</span>
+                              <span>{post._count?.likes ?? 0} curtidas</span>
+                            </div>
+                          </div>
                         </Link>
 
-                        <button
-                          type="button"
-                          onClick={() => handleOpenDeleteModal(post)}
-                        >
-                          Excluir
-                        </button>
-                      </div>
-                    </article>
-                  ))}
+                        <div className="dashboard-post-actions">
+                          <Link to={`/dashboard/posts/${post.id}/edit`}>
+                            Editar
+                          </Link>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenDeleteModal(post)}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="dashboard-empty">
@@ -246,54 +403,41 @@ export function Dashboard() {
             <aside className="activity-panel">
               <h2>Atividade Recente</h2>
 
-              <div className="activity-list">
-                <div className="activity-item">
-                  <div className="activity-avatar">M</div>
+              {recentActivities.length > 0 ? (
+                <div className="activity-list">
+                  {recentActivities.map((activity) => {
+                    const initial = activity.user.name.charAt(0).toUpperCase();
 
-                  <div>
-                    <p>
-                      <strong>Marie Smith</strong> comentou em{" "}
-                      <span>O Futuro da Inteligência Artificial em 2025</span>
-                    </p>
+                    return (
+                      <div className="activity-item" key={activity.id}>
+                        <div className="activity-avatar">{initial}</div>
 
-                    <small>
-                      <img src={commentIcon} alt="" className="activity-icon" />
-                      5 min atrás
-                    </small>
-                  </div>
+                        <div>
+                          <p>
+                            <strong>{activity.user.name}</strong> comentou em{" "}
+                            <Link to={`/posts/${activity.postId}`}>
+                              {activity.postTitle}
+                            </Link>
+                          </p>
+
+                          <small>
+                            <img
+                              src={commentIcon}
+                              alt=""
+                              className="activity-icon"
+                            />
+                            {formatRelativeTime(activity.createdAt)}
+                          </small>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-
-                <div className="activity-item">
-                  <div className="activity-avatar">J</div>
-
-                  <div>
-                    <p>
-                      <strong>John Doe</strong> curtiu seu artigo{" "}
-                      <span>Desenvolvimento web moderno</span>
-                    </p>
-
-                    <small>
-                      <img src={commentIcon} alt="" className="activity-icon" />
-                      12 min atrás
-                    </small>
-                  </div>
-                </div>
-
-                <div className="activity-item">
-                  <div className="activity-avatar">A</div>
-
-                  <div>
-                    <p>
-                      <strong>Ana Costa</strong> começou a seguir seu perfil
-                    </p>
-
-                    <small>
-                      <img src={commentIcon} alt="" className="activity-icon" />
-                      30 min atrás
-                    </small>
-                  </div>
-                </div>
-              </div>
+              ) : (
+                <p className="activity-empty">
+                  Nenhum comentário recente nos seus artigos.
+                </p>
+              )}
             </aside>
           </div>
         </section>

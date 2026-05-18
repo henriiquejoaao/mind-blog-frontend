@@ -1,5 +1,5 @@
 import axios from "axios"; // usado para identificar erros vindos do Axios/API
-import { ChangeEvent, FormEvent, useEffect, useState } from "react"; // hooks e tipos de eventos do React
+import { ChangeEvent, FormEvent, KeyboardEvent, useEffect, useState } from "react"; // hooks e tipos de eventos do React
 import { Link, useNavigate } from "react-router-dom"; // Link navega entre páginas e useNavigate redireciona via código
 
 import { Header } from "../components/Header"; // componente do topo
@@ -12,14 +12,21 @@ import "./NewPost.css"; // estilos da página de criação de artigo
 export function NewPost() {
   const navigate = useNavigate(); // usado para redirecionar o usuário
 
-  const [title, setTitle] = useState(""); // armazena o título do artigo
-  const [content, setContent] = useState(""); // armazena o conteúdo do artigo
-  const [banner, setBanner] = useState<File | null>(null); // armazena o arquivo de imagem selecionado
-  const [bannerPreview, setBannerPreview] = useState(""); // armazena a URL temporária para pré-visualizar a imagem
+  const [title, setTitle] = useState(""); // título do artigo
+  const [summary, setSummary] = useState(""); // resumo do artigo
+  const [category, setCategory] = useState("Desenvolvimento web"); // categoria do artigo
+  const [content, setContent] = useState(""); // conteúdo em markdown
 
-  const [error, setError] = useState(""); // armazena mensagens de erro
-  const [loading, setLoading] = useState(false); // controla o carregamento do botão
-  const [successModalOpen, setSuccessModalOpen] = useState(false); // controla a abertura do modal de sucesso
+  const [tagInput, setTagInput] = useState(""); // texto digitado para adicionar tag
+  const [tags, setTags] = useState<string[]>([]); // lista de tags
+
+  const [banner, setBanner] = useState<File | null>(null); // arquivo de imagem selecionado
+  const [bannerPreview, setBannerPreview] = useState(""); // prévia da imagem
+  const [bannerFileName, setBannerFileName] = useState(""); // nome do arquivo escolhido
+
+  const [error, setError] = useState(""); // mensagens de erro
+  const [loading, setLoading] = useState(false); // carregamento do botão
+  const [successModalOpen, setSuccessModalOpen] = useState(false); // modal de sucesso
 
   // verifica se o usuário está logado ao abrir a página
   useEffect(() => {
@@ -38,8 +45,41 @@ export function NewPost() {
       return;
     }
 
-    setBanner(file); // salva o arquivo selecionado
-    setBannerPreview(URL.createObjectURL(file)); // cria uma URL temporária para preview
+    setBanner(file);
+    setBannerPreview(URL.createObjectURL(file));
+    setBannerFileName(file.name);
+  }
+
+  // adiciona uma tag na lista
+  function handleAddTag() {
+    const formattedTag = tagInput.trim();
+
+    if (!formattedTag) {
+      return;
+    }
+
+    if (tags.includes(formattedTag)) {
+      setTagInput("");
+      return;
+    }
+
+    setTags((currentTags) => [...currentTags, formattedTag]);
+    setTagInput("");
+  }
+
+  // remove uma tag da lista
+  function handleRemoveTag(tagToRemove: string) {
+    setTags((currentTags) =>
+      currentTags.filter((tag) => tag !== tagToRemove)
+    );
+  }
+
+  // permite adicionar tag apertando Enter
+  function handleTagKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleAddTag();
+    }
   }
 
   // função executada ao enviar o formulário
@@ -48,8 +88,23 @@ export function NewPost() {
 
     setError("");
 
-    if (!title || !content) {
-      setError("Título e conteúdo são obrigatórios.");
+    if (!title.trim()) {
+      setError("O título é obrigatório.");
+      return;
+    }
+
+    if (!summary.trim()) {
+      setError("O resumo é obrigatório.");
+      return;
+    }
+
+    if (!category.trim()) {
+      setError("A categoria é obrigatória.");
+      return;
+    }
+
+    if (!content.trim()) {
+      setError("O conteúdo é obrigatório.");
       return;
     }
 
@@ -59,7 +114,10 @@ export function NewPost() {
       const formData = new FormData();
 
       formData.append("title", title);
+      formData.append("summary", summary);
+      formData.append("category", category);
       formData.append("content", content);
+      formData.append("tags", tags.join(","));
 
       if (banner) {
         formData.append("banner", banner);
@@ -71,7 +129,7 @@ export function NewPost() {
         }
       });
 
-      setSuccessModalOpen(true); // abre o modal de sucesso após criar o artigo
+      setSuccessModalOpen(true);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const message =
@@ -112,19 +170,55 @@ export function NewPost() {
 
           <form className="new-post-form" onSubmit={handleCreatePost}>
             <div className="new-post-field">
-              <label htmlFor="title">Título do artigo</label>
+              <label htmlFor="title">Título do Artigo *</label>
 
               <input
                 id="title"
                 type="text"
-                placeholder="Digite o título do seu artigo"
+                placeholder="O Futuro da Inteligência Artificial em 2025"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
               />
             </div>
 
             <div className="new-post-field">
-              <label htmlFor="banner">Imagem de capa</label>
+              <label htmlFor="summary">Resumo *</label>
+
+              <textarea
+                id="summary"
+                className="new-post-summary"
+                placeholder="Escreva um breve resumo do artigo..."
+                value={summary}
+                maxLength={120}
+                onChange={(event) => setSummary(event.target.value)}
+              />
+
+              <span className="new-post-counter">
+                {summary.length}/120 caracteres
+              </span>
+            </div>
+
+            <div className="new-post-field">
+              <label htmlFor="category">Categoria *</label>
+
+              <select
+                id="category"
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+              >
+                <option value="Desenvolvimento web">Desenvolvimento web</option>
+                <option value="Backend">Backend</option>
+                <option value="Frontend">Frontend</option>
+                <option value="Inteligência Artificial">
+                  Inteligência Artificial
+                </option>
+                <option value="DevOps">DevOps</option>
+                <option value="Banco de Dados">Banco de Dados</option>
+              </select>
+            </div>
+
+            <div className="new-post-field">
+              <label htmlFor="banner">Imagem de Capa</label>
 
               <label htmlFor="banner" className="banner-upload-area">
                 {bannerPreview ? (
@@ -144,14 +238,69 @@ export function NewPost() {
                 onChange={handleBannerChange}
                 className="banner-input"
               />
+
+              {bannerFileName && (
+                <div className="new-post-banner-name">{bannerFileName}</div>
+              )}
             </div>
 
             <div className="new-post-field">
-              <label htmlFor="content">Conteúdo</label>
+              <label htmlFor="tag">Tags</label>
+
+              <div className="new-post-tags-row">
+                <input
+                  id="tag"
+                  type="text"
+                  placeholder="Digite uma tag"
+                  value={tagInput}
+                  onChange={(event) => setTagInput(event.target.value)}
+                  onKeyDown={handleTagKeyDown}
+                />
+
+                <button
+                  type="button"
+                  className="new-post-add-tag-button"
+                  onClick={handleAddTag}
+                >
+                  Adicionar
+                </button>
+              </div>
+
+              {tags.length > 0 && (
+                <div className="new-post-tags-list">
+                  {tags.map((tag) => (
+                    <button
+                      type="button"
+                      key={tag}
+                      className="new-post-tag"
+                      onClick={() => handleRemoveTag(tag)}
+                    >
+                      {tag}
+                      <span>×</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="new-post-field">
+              <label htmlFor="content">Conteúdo do Artigo *</label>
 
               <textarea
                 id="content"
-                placeholder="Escreva o conteúdo do artigo..."
+                className="new-post-content-textarea"
+                placeholder={`## Introdução
+
+Escreva seu artigo usando Markdown.
+
+## Principais pontos
+
+- Primeiro ponto
+- Segundo ponto
+
+## Conclusão
+
+Finalize seu artigo aqui.`}
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
               />
