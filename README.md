@@ -1,11 +1,12 @@
 # Mind Blog - Frontend
 
-Frontend do projeto **Mind Blog**, uma plataforma de artigos de tecnologia desenvolvida como parte de um case técnico.  
+Frontend do projeto **Mind Blog**, uma plataforma de artigos de tecnologia desenvolvida como parte de um case técnico.
+
 A aplicação permite explorar artigos, visualizar detalhes, criar conta, fazer login, gerenciar artigos, comentar, curtir e acompanhar estatísticas no dashboard.
 
 ## 🔗 Repositórios
 
-- Frontend: `https://github.com/henriiquejoaao/mind-blog-frontend`
+- Frontend: `Chttps://github.com/henriiquejoaao/mind-blog-frontend`
 - Backend: `https://github.com/henriiquejoaao/mind-blog-backend`
 
 ## 🚀 Tecnologias utilizadas
@@ -18,6 +19,7 @@ A aplicação permite explorar artigos, visualizar detalhes, criar conta, fazer 
 - React Markdown
 - Remark GFM
 - CSS
+- SVG Icons
 
 ## 📌 Funcionalidades
 
@@ -33,7 +35,7 @@ A aplicação permite explorar artigos, visualizar detalhes, criar conta, fazer 
 - Contagem real de visualizações
 - Contagem real de curtidas
 - Contagem real de comentários
-- Cópia do link do artigo pelo botão de compartilhar
+- Botão de compartilhar que copia o link do artigo
 
 ### Autenticação
 
@@ -41,7 +43,7 @@ A aplicação permite explorar artigos, visualizar detalhes, criar conta, fazer 
 - Login
 - Logout
 - Rotas privadas protegidas
-- Header adaptado conforme usuário logado/deslogado
+- Header adaptado conforme usuário logado ou deslogado
 
 ### Área autenticada
 
@@ -83,6 +85,8 @@ Além do escopo principal, foram adicionadas melhorias de experiência e funcion
 - Filtros por categoria
 - Uso de ícones SVG personalizados
 - Página de configurações de perfil
+- Remoção de imagem em posts
+- Organização de artigos por curtidas na Home
 
 ## 📁 Estrutura principal
 
@@ -116,7 +120,7 @@ src
 ### 1. Clone o repositório
 
 ```bash
-git clone COLOQUE_AQUI_O_LINK_DO_REPOSITORIO_FRONTEND
+git clone https://github.com/henriiquejoaao/mind-blog-frontend
 ```
 
 ### 2. Acesse a pasta do projeto
