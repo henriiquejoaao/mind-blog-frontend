@@ -21,8 +21,11 @@ interface PostCount {
 interface Post {
   id: number;
   title: string;
+  summary?: string | null;
   content: string;
   banner?: string | null;
+  category?: string | null;
+  tags?: string | null;
   views?: number;
   createdAt: string;
   updatedAt: string;
@@ -37,13 +40,19 @@ interface PostCardProps {
 
 // componente responsável por exibir um card de artigo
 export function PostCard({ post, variant = "default" }: PostCardProps) {
-  const bannerUrl = post.banner
-    ? `http://localhost:3333${post.banner}`
-    : "";
+  const bannerUrl = post.banner ? `http://localhost:3333${post.banner}` : "";
 
   const likesCount = post._count?.likes ?? 0;
   const commentsCount = post._count?.comments ?? 0;
   const viewsCount = post.views ?? 0;
+
+  const category = post.category || "Sem categoria";
+
+  const summary =
+    post.summary ||
+    (post.content.length > 120
+      ? `${post.content.slice(0, 120)}...`
+      : post.content);
 
   function calculateReadingTime(content: string) {
     const words = content.trim().split(/\s+/).filter(Boolean).length;
@@ -67,17 +76,13 @@ export function PostCard({ post, variant = "default" }: PostCardProps) {
       </Link>
 
       <div className="post-card-content">
-        <span className="post-card-category">Desenvolvimento web</span>
+        <span className="post-card-category">{category}</span>
 
         <h3>
           <Link to={`/posts/${post.id}`}>{post.title}</Link>
         </h3>
 
-        <p>
-          {post.content.length > 120
-            ? `${post.content.slice(0, 120)}...`
-            : post.content}
-        </p>
+        <p>{summary}</p>
 
         <div className="post-card-footer">
           <span>{post.author.name}</span>

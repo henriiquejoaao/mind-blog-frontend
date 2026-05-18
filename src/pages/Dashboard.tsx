@@ -336,7 +336,7 @@ export function Dashboard() {
 
               {posts.length > 0 ? (
                 <div className="dashboard-post-list">
-                  {posts.slice(0, 4).map((post) => {
+                  {posts.map((post) => {
                     const postSummary =
                       post.summary ||
                       (post.content.length > 80
