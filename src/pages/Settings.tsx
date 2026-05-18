@@ -274,9 +274,15 @@ export function Settings() {
               </div>
             </section>
 
-            <button type="submit" className="settings-save-button">
-              Salvar Alterações
-            </button>
+            <div className="settings-actions">
+              <button type="submit" className="settings-save-button">
+                Salvar Alterações
+              </button>
+
+              <Link to="/dashboard" className="settings-cancel-button">
+                Cancelar
+              </Link>
+            </div>
           </form>
         </section>
       </main>
